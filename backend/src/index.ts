@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
+import path from "path";
 
 dotenv.config();
 
@@ -12,6 +13,12 @@ const socketio = new Server(server, {
     origin: "*", // Allow requests from any origin
     methods: ["GET", "POST"],
   },
+});
+
+app.use(express.static(path.join(__dirname, "../../frontend/dist")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../../frontend/dist", "index.html"));
 });
 
 const port = process.env.PORT || 3000;
