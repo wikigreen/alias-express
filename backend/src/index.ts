@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import path from "path";
+import roomRouter from "./room/roomRoutes";
 
 dotenv.config();
 
@@ -22,15 +23,16 @@ app.get("/", (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-app.get("/api/rand", (req: Request, res: Response) => {
-  res.send({ number: Math.floor(Math.random() * 100000) });
-});
+
+app.use("/api/room", roomRouter)
+
 app.get("/api/ping", (req: Request, res: Response) => {
   res.send("pong");
 });
 
 socketio.on("connection", (socket) => {
   console.log("new client connection" + socket.id);
+  const hello = socket.handshake.query.hello;
 
   // Respond to custom events
   socket.on("message", (data) => {
