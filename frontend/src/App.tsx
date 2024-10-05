@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
 
 const App = () => {
-  const [count, setCount] = useState(0);
+  const [res, setRes] = useState(0);
+
+  const callApi = useCallback(() => {
+    fetch("api/rand")
+      .then((res) => res.json())
+      .then((res) => setRes(res.number));
+  }, []);
 
   return (
     <>
@@ -18,9 +24,7 @@ const App = () => {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
+        <button onClick={callApi}>rand number is {res}</button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>

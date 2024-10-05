@@ -15,9 +15,11 @@ const socketio = new Server(server, {
 });
 
 const port = process.env.PORT || 3000;
-
-app.get("/ping", (req: Request, res: Response) => {
-  res.send("Express + +");
+app.get("/api/rand", (req: Request, res: Response) => {
+  res.send({ number: Math.floor(Math.random() * 100000) });
+});
+app.get("/api/ping", (req: Request, res: Response) => {
+  res.send("pong");
 });
 
 socketio.on("connection", (socket) => {
@@ -36,5 +38,5 @@ socketio.on("connection", (socket) => {
 });
 
 server.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
+  console.log(`[server]: Server is running at http://localhost:${port}/ping`);
 });

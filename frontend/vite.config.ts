@@ -11,6 +11,11 @@ export default defineConfig({
         changeOrigin: true, // Necessary for virtual hosted sites
         secure: false, // Disable SSL verification if needed
       },
+      "/api": {
+        target: "http://localhost:3000", // Your backend server running Socket.IO
+        changeOrigin: true, // Necessary for virtual hosted sites
+        secure: false, // Disable SSL verification if needed
+      },
     },
   },
 });
