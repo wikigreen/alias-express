@@ -47,9 +47,20 @@ socketio.on("connection", async (socket) => {
       return roomService.getPlayers(roomId);
     })
     .then((players) => {
-      socket.emit("selfConnect", players);
       socketio.to(roomId).emit("playerConnect", players);
     });
+
+  socket.on("selfConnect", () => {
+    roomService.connectPlayer(roomId, nickname).then((player) => {
+      if (!player) {
+        socket.disconnect();
+        console.log(`Client disconnected: ${socket.id}`);
+      }
+      socket.join(roomId);
+      socket.emit("selfConnect", player);
+      return roomService.getPlayers(roomId);
+    });
+  });
 
   console.log("new client connection" + socket.id);
   console.log("Room id is" + roomId);
@@ -61,5 +72,7 @@ socketio.on("connection", async (socket) => {
 });
 
 server.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}/ping`);
+  console.log(
+    `[server]: Server is running at http://localhost:${port}/api/ping`,
+  );
 });

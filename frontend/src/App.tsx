@@ -1,39 +1,26 @@
-import { useCallback, useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
+import {
+  Route,
+  RouterProvider,
+  createHashRouter,
+  createRoutesFromElements,
+} from "react-router-dom";
+import { LobbyLayout } from "./layout/LobbyLayout";
+import { GameRoomLayout } from "./layout/GameRoomLayout";
+import { useMemo } from "react";
 
 const App = () => {
-  const [res, setRes] = useState(0);
-
-  const callApi = useCallback(() => {
-    fetch("api/rand")
-      .then((res) => res.json())
-      .then((res) => setRes(res.number));
+  const router = useMemo(() => {
+    return createHashRouter(
+      createRoutesFromElements(
+        <Route>
+          <Route path="/" element={<LobbyLayout />} />
+          <Route path="/:roomId" element={<GameRoomLayout />} />
+        </Route>,
+      ),
+    );
   }, []);
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={callApi}>rand number is {res}</button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  );
+  return <RouterProvider router={router} />;
 };
 
 export default App;
