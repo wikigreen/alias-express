@@ -4,6 +4,8 @@ import { createServer } from "node:http";
 import { Server } from "socket.io";
 import path from "path";
 import roomRouter from "./room/roomRoutes";
+import { roomService } from "./room/roomService";
+import { Player } from "./room/types";
 
 dotenv.config();
 
@@ -24,21 +26,33 @@ app.get("/", (req, res) => {
 
 const port = process.env.PORT || 3000;
 
-app.use("/api/room", roomRouter)
+app.use("/api/room", roomRouter);
 
 app.get("/api/ping", (req: Request, res: Response) => {
   res.send("pong");
 });
 
-socketio.on("connection", (socket) => {
-  console.log("new client connection" + socket.id);
-  const hello = socket.handshake.query.hello;
+socketio.on("connection", async (socket) => {
+  const { roomId, nickname } = socket.handshake.query as Omit<
+    Player,
+    "id" | "online" | "isAdmin"
+  >;
+  await roomService
+    .connectPlayer(roomId, nickname)
+    .then((player) => {
+      if (!player) {
+        socket.disconnect();
+      }
+      socket.join(roomId);
+      return roomService.getPlayers(roomId);
+    })
+    .then((players) => {
+      socket.emit("selfConnect", players);
+      socketio.to(roomId).emit("playerConnect", players);
+    });
 
-  // Respond to custom events
-  socket.on("message", (data) => {
-    console.log(`Message from ${socket.id}:`, data);
-    socket.emit("response", { message: "Message received!" });
-  });
+  console.log("new client connection" + socket.id);
+  console.log("Room id is" + roomId);
 
   // Handle disconnect
   socket.on("disconnect", () => {
