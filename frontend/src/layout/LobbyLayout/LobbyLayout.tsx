@@ -7,7 +7,7 @@ import {
   CardMedia,
   Typography,
 } from "@mui/material";
-import { CreateRoomButton } from "../../features/CreateRoomButton/CreateRoomButton.tsx";
+import { CreateRoomButton } from "../../features/Room";
 
 export const LobbyLayout: React.FC = () => {
   return (

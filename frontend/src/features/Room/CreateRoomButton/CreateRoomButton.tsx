@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Button } from "@mui/material";
-import { useCreateRoomMutation } from "./services";
+import { useCreateRoomMutation } from "../services";
 import { useNavigate } from "react-router";
 
 export const CreateRoomButton: React.FC = () => {

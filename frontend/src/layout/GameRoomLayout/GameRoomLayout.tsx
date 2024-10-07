@@ -1,26 +1,6 @@
-import React, { useCallback, useState } from "react";
-import { GameStateProvider } from "../../context/GameContext";
-import { useParams } from "react-router";
-import { NicknameInput } from "../../features/NicknameInput";
+import React from "react";
+import { RoomComponent } from "../../features/Room/RoomComponent";
 
 export const GameRoomLayout: React.FC = () => {
-  const [nickname, setNickname] = useState<string>();
-  const { roomId } = useParams();
-
-  const onNicknameEnter = useCallback(
-    (nickname: string) => {
-      setNickname(nickname);
-    },
-    [setNickname],
-  );
-
-  if (!nickname) {
-    return <NicknameInput onEnter={onNicknameEnter} />;
-  }
-
-  return (
-    <GameStateProvider nickname={nickname} roomId={roomId}>
-      <span>Hello from Game room</span>;
-    </GameStateProvider>
-  );
+  return <RoomComponent />;
 };
