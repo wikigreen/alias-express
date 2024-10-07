@@ -7,6 +7,8 @@ import {
 import { LobbyLayout } from "./layout/LobbyLayout";
 import { GameRoomLayout } from "./layout/GameRoomLayout";
 import { useMemo } from "react";
+import { Provider } from "react-redux";
+import { store } from "./redux/store.ts";
 
 const App = () => {
   const router = useMemo(() => {
@@ -20,7 +22,11 @@ const App = () => {
     );
   }, []);
 
-  return <RouterProvider router={router} />;
+  return (
+    <Provider store={store}>
+      <RouterProvider router={router} />;
+    </Provider>
+  );
 };
 
 export default App;

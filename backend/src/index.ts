@@ -1,4 +1,4 @@
-import express, { Express, Request, Response } from "express";
+import express, { Express, Request, Response, Router } from "express";
 import dotenv from "dotenv";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
@@ -26,9 +26,12 @@ app.get("/", (req, res) => {
 
 const port = process.env.PORT || 3000;
 
-app.use("/api/room", roomRouter);
+const apiRouter = Router();
+app.use("/api", apiRouter);
 
-app.get("/api/ping", (req: Request, res: Response) => {
+apiRouter.use("/room", roomRouter);
+
+apiRouter.get("/ping", (req: Request, res: Response) => {
   res.send("pong");
 });
 
