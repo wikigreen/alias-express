@@ -86,7 +86,7 @@ const updatePlayer = async (
       ...(player.roomId ? { roomId: player.roomId } : {}),
       ...(player.nickname ? { nickname: player.nickname } : {}),
       ...(player.online != null ? { online: +player.online } : {}),
-      ...(player.isAdmin ? { isAdmin: +player.isAdmin } : {}),
+      ...(player.isAdmin != null ? { isAdmin: +player.isAdmin } : {}),
     };
 
     console.log("Result of update is before ", JSON.stringify(result));
@@ -122,6 +122,7 @@ const getPlayers = async (roomId: string): Promise<Player[]> => {
       roomId,
       nickname: player.nickname,
       online: !!+player.online,
+      isAdmin: !!+player.isAdmin,
     } as Player);
   }
 
