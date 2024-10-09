@@ -40,18 +40,16 @@ socketio.on("connection", async (socket) => {
     Player,
     "id" | "online" | "isAdmin"
   >;
-  await roomService
-    .connectPlayer(roomId, nickname)
-    .then((player) => {
-      if (!player) {
-        socket.disconnect();
-      }
-      socket.join(roomId);
-      return roomService.getPlayers(roomId);
-    })
-    .then((players) => {
-      socketio.to(roomId).emit("playerConnect", players);
-    });
+  const player = await roomService.connectPlayer(roomId, nickname);
+
+  if (!player) {
+    socket.disconnect();
+    return;
+  }
+  socket.join(roomId);
+  await roomService.getPlayers(roomId).then((players) => {
+    socketio.to(roomId).emit("playerConnect", players);
+  });
 
   socket.on("selfConnect", () => {
     roomService.connectPlayer(roomId, nickname).then((player) => {
@@ -70,7 +68,15 @@ socketio.on("connection", async (socket) => {
 
   // Handle disconnect
   socket.on("disconnect", () => {
-    console.log(`Client disconnected: ${socket.id}`);
+    roomService
+      .removePlayer(player)
+      .then(() => {
+        socket.leave(roomId);
+        return roomService.getPlayers(roomId);
+      })
+      .then((players) => {
+        socketio.to(roomId).emit("playerConnect", players);
+      });
   });
 });
 

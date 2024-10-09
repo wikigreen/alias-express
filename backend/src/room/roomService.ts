@@ -28,6 +28,10 @@ const connectPlayer = async (
   return roomRepository.updatePlayer({ ...player, isAdmin: true });
 };
 
+const removePlayer = async (player: Player): Promise<void> => {
+  await roomRepository.removePlayer(player);
+};
+
 const getPlayers = async (roomId: Room["id"]): Promise<Partial<Player>[]> => {
   const players = await roomRepository.getPlayers(roomId);
   return players.map((p) => ({ ...p, id: undefined }));
@@ -38,4 +42,5 @@ export const roomService = {
   getRoom,
   connectPlayer,
   getPlayers,
+  removePlayer,
 };

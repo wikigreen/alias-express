@@ -67,6 +67,11 @@ const addPlayer = async (
   return [resPlayer, playersAmount];
 };
 
+const removePlayer = async (player: Player): Promise<void> => {
+  const playerKey = getRoomPlayerKey(player.roomId, player.id);
+  await redisClient.then((client) => client.del(playerKey));
+};
+
 const updatePlayer = async (player: Player): Promise<Player> => {
   const playerKey = getRoomPlayerKey(player.roomId, player.id);
   await redisClient.then((client) =>
@@ -131,4 +136,5 @@ export const roomRepository = {
   addPlayer,
   getPlayers,
   updatePlayer,
+  removePlayer,
 };
