@@ -68,8 +68,12 @@ socketio.on("connection", async (socket) => {
 
   // Handle disconnect
   socket.on("disconnect", () => {
+    if (!player.id || !player.roomId) {
+      return;
+    }
+
     roomService
-      .removePlayer(player)
+      .disconnectPlayer(player.id, player.roomId)
       .then(() => {
         socket.leave(roomId);
         return roomService.getPlayers(roomId);

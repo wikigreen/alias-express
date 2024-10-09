@@ -67,30 +67,41 @@ const addPlayer = async (
   return [resPlayer, playersAmount];
 };
 
-const removePlayer = async (player: Player): Promise<void> => {
-  const playerKey = getRoomPlayerKey(player.roomId, player.id);
+const removePlayer = async (
+  playerId: string,
+  playerRoom: string,
+): Promise<void> => {
+  const playerKey = getRoomPlayerKey(playerRoom, playerId);
   await redisClient.then((client) => client.del(playerKey));
 };
 
-const updatePlayer = async (player: Player): Promise<Player> => {
+const updatePlayer = async (
+  player: Partial<Player>,
+): Promise<Partial<Player>> => {
   const playerKey = getRoomPlayerKey(player.roomId, player.id);
-  await redisClient.then((client) =>
-    client.hSet(playerKey, {
-      roomId: player.roomId,
-      nickname: player.nickname,
-      online: +player.online,
-      isAdmin: +player.isAdmin,
-    }),
-  );
+  console.log("player key", playerKey);
+  console.log("player in online", player.online);
+  await redisClient.then((client) => {
+    const result = {
+      ...(player.roomId ? { roomId: player.roomId } : {}),
+      ...(player.nickname ? { nickname: player.nickname } : {}),
+      ...(player.online != null ? { online: +player.online } : {}),
+      ...(player.isAdmin ? { isAdmin: +player.isAdmin } : {}),
+    };
+
+    console.log("Result of update is before ", JSON.stringify(result));
+
+    client.hSet(playerKey, result);
+  });
 
   console.log(`Player is updated ${player.id}`);
 
-  const resPlayer: Player = {
+  const resPlayer: Partial<Player> = {
     id: player.id,
     roomId: player.roomId,
     online: player.online,
     nickname: player.nickname,
-    isAdmin: false,
+    isAdmin: player.isAdmin,
   };
 
   console.log(`Player saved ${resPlayer.roomId}:`, resPlayer);
@@ -110,7 +121,7 @@ const getPlayers = async (roomId: string): Promise<Player[]> => {
       id: playerId,
       roomId,
       nickname: player.nickname,
-      online: !!player.online,
+      online: !!+player.online,
     } as Player);
   }
 

@@ -13,7 +13,7 @@ const getRoom = async (roomId: Room["id"]): Promise<Optional<Room>> => {
 const connectPlayer = async (
   roomId: Room["id"],
   nickname: string,
-): Promise<Optional<Player>> => {
+): Promise<Optional<Partial<Player>>> => {
   const room = await getRoom(roomId);
   if (!room) {
     throw new Error(`Room with id ${roomId} was not found`);
@@ -25,11 +25,31 @@ const connectPlayer = async (
   if (count > 1) {
     return player;
   }
-  return roomRepository.updatePlayer({ ...player, isAdmin: true });
+  return roomRepository.updatePlayer({ id: player.id, isAdmin: true });
 };
 
-const removePlayer = async (player: Player): Promise<void> => {
-  await roomRepository.removePlayer(player);
+const removePlayer = async (
+  playerId: string,
+  playerRoom: string,
+): Promise<void> => {
+  await roomRepository.removePlayer(playerId, playerRoom);
+};
+
+const updatePlayer = async (
+  player: Partial<Player>,
+): Promise<Partial<Player>> => {
+  return roomRepository.updatePlayer(player);
+};
+
+const disconnectPlayer = async (
+  playerId: string,
+  playerRoom: string,
+): Promise<Partial<Player>> => {
+  return roomRepository.updatePlayer({
+    id: playerId,
+    roomId: playerRoom,
+    online: false,
+  });
 };
 
 const getPlayers = async (roomId: Room["id"]): Promise<Partial<Player>[]> => {
@@ -43,4 +63,6 @@ export const roomService = {
   connectPlayer,
   getPlayers,
   removePlayer,
+  updatePlayer,
+  disconnectPlayer,
 };
