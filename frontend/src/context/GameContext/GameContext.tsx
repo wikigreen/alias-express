@@ -1,21 +1,14 @@
-import {
-  createContext,
-  useEffect,
-  useState,
-  useContext,
-  PropsWithChildren,
-} from "react";
+import { createContext, useEffect, useState, PropsWithChildren } from "react";
 import { io, Socket } from "socket.io-client";
-
-type GameState = Record<string, string>;
+import { Player } from "./types";
 
 interface GameStateContextType {
   socket: Socket | null;
-  gameState: GameState | null;
+  players: Player[];
 }
 
-export const GameStateContext = createContext<GameStateContextType | undefined>(
-  undefined,
+export const GameStateContext = createContext<GameStateContextType>(
+  {} as GameStateContextType,
 );
 
 interface GameStateProviderProps {
@@ -23,15 +16,13 @@ interface GameStateProviderProps {
   roomId?: string;
 }
 
-export const useGameState = () => useContext(GameStateContext);
-
 export const GameStateProvider = ({
   children,
   nickname,
   roomId,
 }: PropsWithChildren<GameStateProviderProps>) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
     if (roomId && nickname) {
@@ -40,8 +31,8 @@ export const GameStateProvider = ({
       });
       setSocket(newSocket);
 
-      newSocket.on("stateUpdate", (updatedState: GameState) => {
-        setGameState(updatedState);
+      newSocket.on("playerConnect", (updatedState: Player[]) => {
+        setPlayers(updatedState);
       });
 
       return () => {
@@ -51,7 +42,7 @@ export const GameStateProvider = ({
   }, [roomId, nickname]);
 
   return (
-    <GameStateContext.Provider value={{ socket, gameState }}>
+    <GameStateContext.Provider value={{ socket, players }}>
       {children}
     </GameStateContext.Provider>
   );
