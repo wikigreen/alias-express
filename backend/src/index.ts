@@ -6,6 +6,8 @@ import path from "path";
 import roomRouter from "./room/roomRoutes";
 import { roomService } from "./room/roomService";
 import { Player } from "./room/types";
+import cookieParser from "cookie-parser";
+import { parse as parseCookies } from "cookie";
 
 dotenv.config();
 
@@ -19,6 +21,7 @@ const socketio = new Server(server, {
 });
 
 app.use(express.static(path.join(__dirname, "../../frontend/dist")));
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../../frontend/dist", "index.html"));
@@ -27,6 +30,7 @@ app.get("/", (req, res) => {
 const port = process.env.PORT || 3000;
 
 const apiRouter = Router();
+apiRouter.use(express.json());
 app.use("/api", apiRouter);
 
 apiRouter.use("/room", roomRouter);
@@ -36,31 +40,33 @@ apiRouter.get("/ping", (req: Request, res: Response) => {
 });
 
 socketio.on("connection", async (socket) => {
-  const { roomId, nickname } = socket.handshake.query as Omit<
+  const { roomId } = socket.handshake.query as Omit<
     Player,
     "id" | "online" | "isAdmin"
   >;
-  const player = await roomService.connectPlayer(roomId, nickname);
+  const { [`room:${roomId}`]: playerId } = parseCookies(
+    socket.handshake.headers.cookie || "",
+  );
+
+  if (!playerId) {
+    socket.disconnect();
+    return;
+  }
+
+  const player = await roomService.getPlayer(roomId, playerId);
 
   if (!player) {
     socket.disconnect();
     return;
   }
   socket.join(roomId);
+  await roomService.updatePlayer({
+    id: player.id,
+    roomId: roomId,
+    online: true,
+  });
   await roomService.getPlayers(roomId).then((players) => {
     socketio.to(roomId).emit("playerConnect", players);
-  });
-
-  socket.on("selfConnect", () => {
-    roomService.connectPlayer(roomId, nickname).then((player) => {
-      if (!player) {
-        socket.disconnect();
-        console.log(`Client disconnected: ${socket.id}`);
-      }
-      socket.join(roomId);
-      socket.emit("selfConnect", player);
-      return roomService.getPlayers(roomId);
-    });
   });
 
   console.log("new client connection" + socket.id);

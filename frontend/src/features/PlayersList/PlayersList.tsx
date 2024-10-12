@@ -31,7 +31,7 @@ export const PlayersList: React.FC = () => {
           <TableBody>
             {players && players.length > 0 ? (
               players.map((player) => (
-                <TableRow key={player.id}>
+                <TableRow key={player.nickname}>
                   <TableCell>{player.nickname}</TableCell>
                   <TableCell align="right">{player.roomId}</TableCell>
                   <TableCell

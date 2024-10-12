@@ -1,24 +1,28 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
-import { NicknameInput } from "../../features/NicknameInput";
+import { NicknameInput } from "../../features/Room";
 import { useParams } from "react-router";
-import { useGetRoomQuery } from "../../features/Room";
+import { useConnectToRoomMutation, useGetRoomQuery } from "../../features/Room";
 import { GameStateProvider } from "../../context/GameContext";
 import { PlayersList } from "../../features/PlayersList/PlayersList.tsx";
 
 export const GameRoomLayout: React.FC = () => {
-  const [nickname, setNickname] = useState<string>();
   const { roomId } = useParams();
 
   const { data, isFetching, isError } = useGetRoomQuery(roomId || "", {
     skip: !roomId,
   });
 
+  const [connectToRoom] = useConnectToRoomMutation();
+
   const onNicknameEnter = useCallback(
     (nickname: string) => {
-      setNickname(nickname);
+      if (!roomId) {
+        return;
+      }
+      connectToRoom({ roomId, nickname });
     },
-    [setNickname],
+    [connectToRoom],
   );
 
   if (isFetching) {
@@ -37,14 +41,14 @@ export const GameRoomLayout: React.FC = () => {
     );
   }
 
-  if (!nickname) {
+  if (!data?.playerId) {
     return <NicknameInput onEnter={onNicknameEnter} roomId={data?.id} />;
   }
 
   return (
-    <GameStateProvider nickname={nickname} roomId={roomId}>
+    <GameStateProvider roomId={roomId}>
       <Typography gutterBottom variant="h3" component="div">
-        You are welcome {nickname}
+        You are welcome player with id {data?.playerId}
       </Typography>
       <PlayersList />
     </GameStateProvider>

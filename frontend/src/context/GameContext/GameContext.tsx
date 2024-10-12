@@ -12,22 +12,20 @@ export const GameStateContext = createContext<GameStateContextType>(
 );
 
 interface GameStateProviderProps {
-  nickname?: string;
   roomId?: string;
 }
 
 export const GameStateProvider = ({
   children,
-  nickname,
   roomId,
 }: PropsWithChildren<GameStateProviderProps>) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
-    if (roomId && nickname) {
+    if (roomId) {
       const newSocket: Socket = io("", {
-        query: { roomId, nickname },
+        query: { roomId },
       });
       setSocket(newSocket);
 
@@ -39,7 +37,7 @@ export const GameStateProvider = ({
         newSocket.disconnect();
       };
     }
-  }, [roomId, nickname]);
+  }, [roomId]);
 
   return (
     <GameStateContext.Provider value={{ socket, players }}>

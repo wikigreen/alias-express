@@ -1,12 +1,14 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { Room } from "../types/Room.ts";
+import { GetRoomResponse, Room } from "../types/Room.ts";
 
 export const roomApi = createApi({
-  reducerPath: "pokemonApi",
+  reducerPath: "roomApi",
   baseQuery: fetchBaseQuery({ baseUrl: "/api/room" }),
+  tagTypes: ["ROOM"],
   endpoints: (builder) => ({
-    getRoom: builder.query<Room, string>({
+    getRoom: builder.query<GetRoomResponse, string>({
       query: (roomId) => `/${roomId}`,
+      providesTags: ["ROOM"],
     }),
     createRoom: builder.mutation<Room, void>({
       query: () => ({
@@ -14,7 +16,22 @@ export const roomApi = createApi({
         method: "POST",
       }),
     }),
+    connectToRoom: builder.mutation<Room, { roomId: string; nickname: string }>(
+      {
+        query: ({ roomId, nickname }) => ({
+          url: `/${roomId}`,
+          body: { nickname },
+          method: "POST",
+        }),
+        //TODO: replace with pessimistic update
+        invalidatesTags: ["ROOM"],
+      },
+    ),
   }),
 });
 
-export const { useGetRoomQuery, useCreateRoomMutation } = roomApi;
+export const {
+  useGetRoomQuery,
+  useCreateRoomMutation,
+  useConnectToRoomMutation,
+} = roomApi;

@@ -15,8 +15,8 @@ interface NicknameInputProps {
 }
 
 export const NicknameInput: React.FC<NicknameInputProps> = ({
-  onEnter,
   roomId,
+  onEnter,
 }) => {
   const [nick, setNick] = useState<string>();
 

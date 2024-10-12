@@ -18,6 +18,9 @@ const connectPlayer = async (
   if (!room) {
     throw new Error(`Room with id ${roomId} was not found`);
   }
+
+  console.log("nickname service", nickname);
+
   const [player, count] = await roomRepository.addPlayer(roomId, {
     online: true,
     nickname,
@@ -57,6 +60,13 @@ const getPlayers = async (roomId: Room["id"]): Promise<Partial<Player>[]> => {
   return players.map((p) => ({ ...p, id: undefined }));
 };
 
+const getPlayer = async (
+  roomId: Room["id"],
+  playerId: Player["id"],
+): Promise<Optional<Player>> => {
+  return roomRepository.getPlayer(roomId, playerId);
+};
+
 export const roomService = {
   createRoom,
   getRoom,
@@ -65,4 +75,5 @@ export const roomService = {
   removePlayer,
   updatePlayer,
   disconnectPlayer,
+  getPlayer,
 };
