@@ -39,23 +39,18 @@ const getRoom = async (roomId: string): Promise<Optional<Room>> => {
   return room;
 };
 
-const addPlayer = async (
-  roomId: string,
-  player: Player,
-): Promise<[Player, number]> => {
+const addPlayer = async (roomId: string, player: Player): Promise<Player> => {
   console.log("Start addPlayer");
   const playerId = randomUUID();
   const playerKey = getRoomPlayerKey(roomId, playerId);
   console.log("1 addPlayer", player);
-  const playersAmount = await redisClient.then((client) =>
+  await redisClient.then((client) =>
     client.hSet(playerKey, {
       roomId,
       nickname: player.nickname || "",
       online: +player.online,
     }),
   );
-
-  console.log(`Number of players in room ${roomId} is ${playersAmount}`);
 
   const resPlayer: Player = {
     id: playerId,
@@ -66,7 +61,7 @@ const addPlayer = async (
   };
 
   console.log(`Player saved ${roomId}:`, resPlayer);
-  return [resPlayer, playersAmount];
+  return resPlayer;
 };
 
 const removePlayer = async (
@@ -83,6 +78,8 @@ const updatePlayer = async (
   const playerKey = getRoomPlayerKey(player.roomId, player.id);
   console.log("player key", playerKey);
   console.log("player in online", player.online);
+  console.log("player in admin", player.isAdmin);
+  console.log("player in admin", player);
   await redisClient.then((client) => {
     const result = {
       ...(player.roomId ? { roomId: player.roomId } : {}),

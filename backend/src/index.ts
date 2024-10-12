@@ -3,11 +3,12 @@ import dotenv from "dotenv";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import path from "path";
-import roomRouter from "./room/roomRoutes";
+import { roomRouter, protectedRoomRouter } from "./room/roomRoutes";
 import { roomService } from "./room/roomService";
 import { Player } from "./room/types";
 import cookieParser from "cookie-parser";
 import { parse as parseCookies } from "cookie";
+import gameRouter from "./game/gameRoutes";
 
 dotenv.config();
 
@@ -34,6 +35,9 @@ apiRouter.use(express.json());
 app.use("/api", apiRouter);
 
 apiRouter.use("/room", roomRouter);
+apiRouter.use("/room", protectedRoomRouter);
+
+apiRouter.use("/game", gameRouter);
 
 apiRouter.get("/ping", (req: Request, res: Response) => {
   res.send("pong");
@@ -60,6 +64,7 @@ socketio.on("connection", async (socket) => {
     return;
   }
   socket.join(roomId);
+  socket.join(playerId);
   await roomService.updatePlayer({
     id: player.id,
     roomId: roomId,
@@ -82,6 +87,7 @@ socketio.on("connection", async (socket) => {
       .disconnectPlayer(player.id, player.roomId)
       .then(() => {
         socket.leave(roomId);
+        socket.leave(playerId);
         return roomService.getPlayers(roomId);
       })
       .then((players) => {

@@ -1,7 +1,19 @@
 import { Router } from "express";
 import { roomService } from "./roomService";
 
-const roomRouter = Router();
+export const roomRouter = Router();
+export const protectedRoomRouter = Router();
+
+protectedRoomRouter.use(async (req, res, next) => {
+  const roomId = req.params.roomId;
+  const playerId = req.cookies?.[`room:${roomId}`];
+  const isAdmin = await roomService.isAdmin(roomId, playerId);
+  if (isAdmin) {
+    next();
+  } else {
+    res.status(403).send("Access denied. Admins only.");
+  }
+});
 
 // Create room
 roomRouter.post("/", async (_, res) => {
@@ -38,7 +50,6 @@ roomRouter.post("/:roomId", async (req, res) => {
     httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24,
   });
+  console.log("what exactly will return in the end", player);
   res.send(player);
 });
-
-export default roomRouter;

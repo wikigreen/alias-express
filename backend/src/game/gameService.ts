@@ -22,6 +22,8 @@ class GameService {
     // Copy words from the global 'simpleWords' list to the game's word list
     const words = await gameRepository.getSimpleWords();
     await gameRepository.copyWordsToGame(gameId, words);
+    await this.addTeamToGame(gameId);
+    await this.addTeamToGame(gameId);
 
     return gameId; // Return the unique game ID
   }
