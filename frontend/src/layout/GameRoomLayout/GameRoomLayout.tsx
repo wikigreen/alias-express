@@ -6,6 +6,7 @@ import { useConnectToRoomMutation, useGetRoomQuery } from "../../features/Room";
 import { GameStateProvider } from "../../context/GameContext";
 import { PlayersList } from "../../features/PlayersList/PlayersList.tsx";
 import { ErrorType } from "../../utils/errorHandler.ts";
+import GameForm from "../../features/Game/CreateGame/GameForm.tsx";
 
 export const GameRoomLayout: React.FC = () => {
   const { roomId } = useParams();
@@ -63,6 +64,7 @@ export const GameRoomLayout: React.FC = () => {
       <Typography gutterBottom variant="h3" component="div">
         You are welcome player with id {data?.playerId}
       </Typography>
+      <GameForm roomId={roomId as string} isAdmin />
     </GameStateProvider>
   );
 };
