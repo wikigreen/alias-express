@@ -15,12 +15,6 @@ dotenv.config();
 
 const app: Express = express();
 const server = createServer(app);
-const socketio = new Server(server, {
-  cors: {
-    origin: "*", // Allow requests from any origin
-    methods: ["GET", "POST"],
-  },
-});
 
 app.use(express.static(path.join(__dirname, "../../frontend/dist")));
 app.use(cookieParser());
@@ -43,6 +37,12 @@ apiRouter.get("/ping", (req: Request, res: Response) => {
   res.send("pong");
 });
 apiRouter.use(exceptionHandlingMiddleware);
+
+const socketio = new Server(server, {
+  cors: {
+    methods: ["GET", "POST"],
+  },
+});
 
 socketio.on("connection", async (socket) => {
   const { roomId } = socket.handshake.query as Omit<
@@ -75,10 +75,6 @@ socketio.on("connection", async (socket) => {
     socketio.to(roomId).emit("playerConnect", players);
   });
 
-  console.log("new client connection" + socket.id);
-  console.log("Room id is" + roomId);
-
-  // Handle disconnect
   socket.on("disconnect", () => {
     if (!player.id || !player.roomId) {
       return;
