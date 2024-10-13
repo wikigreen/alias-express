@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { GetRoomResponse, Room } from "../types";
+import { transformErrorResponse } from "../../../utils/errorHandler.ts";
 
 export const roomApi = createApi({
   reducerPath: "roomApi",
@@ -24,7 +25,8 @@ export const roomApi = createApi({
           method: "POST",
         }),
         //TODO: replace with pessimistic update
-        invalidatesTags: ["ROOM"],
+        invalidatesTags: (_: unknown, error) => (error ? [] : ["ROOM"]),
+        transformErrorResponse,
       },
     ),
   }),

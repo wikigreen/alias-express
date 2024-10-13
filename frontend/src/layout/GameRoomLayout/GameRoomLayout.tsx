@@ -1,19 +1,25 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { NicknameInput } from "../../features/Room";
 import { useParams } from "react-router";
 import { useConnectToRoomMutation, useGetRoomQuery } from "../../features/Room";
 import { GameStateProvider } from "../../context/GameContext";
 import { PlayersList } from "../../features/PlayersList/PlayersList.tsx";
+import { ErrorType } from "../../utils/errorHandler.ts";
 
 export const GameRoomLayout: React.FC = () => {
   const { roomId } = useParams();
 
+  const [connectToRoom, { error }] = useConnectToRoomMutation();
+
+  const alreadyTakenNick = useMemo(
+    () => (error as ErrorType)?.nickname,
+    [(error as ErrorType)?.nickname],
+  );
+
   const { data, isFetching, isError } = useGetRoomQuery(roomId || "", {
     skip: !roomId,
   });
-
-  const [connectToRoom] = useConnectToRoomMutation();
 
   const onNicknameEnter = useCallback(
     (nickname: string) => {
@@ -42,7 +48,13 @@ export const GameRoomLayout: React.FC = () => {
   }
 
   if (!data?.playerId) {
-    return <NicknameInput onEnter={onNicknameEnter} roomId={data?.id} />;
+    return (
+      <NicknameInput
+        onEnter={onNicknameEnter}
+        roomId={data?.id}
+        alreadyTakenNick={alreadyTakenNick}
+      />
+    );
   }
 
   return (

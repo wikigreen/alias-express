@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -12,13 +12,20 @@ import {
 interface NicknameInputProps {
   onEnter: (nickname: string) => void;
   roomId?: string;
+  alreadyTakenNick?: string;
 }
 
 export const NicknameInput: React.FC<NicknameInputProps> = ({
   roomId,
   onEnter,
+  alreadyTakenNick,
 }) => {
   const [nick, setNick] = useState<string>();
+
+  const isAlreadyTaken = useMemo(() => {
+    if (!alreadyTakenNick) return false;
+    return alreadyTakenNick === nick;
+  }, [alreadyTakenNick, nick]);
 
   return (
     <Card
@@ -48,6 +55,12 @@ export const NicknameInput: React.FC<NicknameInputProps> = ({
         </Typography>
       </CardContent>
       <TextField
+        error={isAlreadyTaken}
+        helperText={
+          isAlreadyTaken
+            ? "Nickname was already taken, try another one"
+            : undefined
+        }
         required
         id="outlined-required"
         label="Nickname"
@@ -61,7 +74,7 @@ export const NicknameInput: React.FC<NicknameInputProps> = ({
         size="small"
         fullWidth
         variant="contained"
-        disabled={!nick}
+        disabled={!nick || isAlreadyTaken}
         onClick={() => {
           if (nick) {
             onEnter?.(nick);

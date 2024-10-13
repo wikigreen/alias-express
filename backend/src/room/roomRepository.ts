@@ -139,6 +139,15 @@ const getPlayer = async (
   } as Player;
 };
 
+const existsByNickname = async (
+  roomId: string,
+  nickname: string,
+): Promise<boolean> => {
+  return getPlayers(roomId).then((players) =>
+    players.some((p) => p.nickname === nickname),
+  );
+};
+
 const getRoomKey = (roomId = "*") => {
   return `room:${roomId}`;
 };
@@ -160,4 +169,5 @@ export const roomRepository = {
   updatePlayer,
   removePlayer,
   getPlayer,
+  existsByNickname,
 };

@@ -3,12 +3,13 @@ import dotenv from "dotenv";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import path from "path";
-import { roomRouter, protectedRoomRouter } from "./room/roomRoutes";
+import { protectedRoomRouter, roomRouter } from "./room/roomRoutes";
 import { roomService } from "./room/roomService";
 import { Player } from "./room/types";
 import cookieParser from "cookie-parser";
 import { parse as parseCookies } from "cookie";
-import gameRouter from "./game/gameRoutes";
+import { gameRouter } from "./game/gameRoutes";
+import { exceptionHandlingMiddleware } from "./common/routesExceptionHandler/exceptionHadlingMiddleware";
 
 dotenv.config();
 
@@ -38,10 +39,10 @@ apiRouter.use("/room", roomRouter);
 apiRouter.use("/room", protectedRoomRouter);
 
 apiRouter.use("/game", gameRouter);
-
 apiRouter.get("/ping", (req: Request, res: Response) => {
   res.send("pong");
 });
+apiRouter.use(exceptionHandlingMiddleware);
 
 socketio.on("connection", async (socket) => {
   const { roomId } = socket.handshake.query as Omit<

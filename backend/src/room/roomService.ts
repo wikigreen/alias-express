@@ -1,6 +1,8 @@
 import { GameStatus, Room, Player } from "./types";
 import { roomRepository } from "./roomRepository";
 import { Optional } from "../utils";
+import { NotFoundError } from "../common/routesExceptionHandler/exceptions";
+import { EntityAlreadyExistsError } from "../common/routesExceptionHandler/exceptions/EntityAlreadyExistsError";
 
 const createRoom = async (): Promise<Room> => {
   return roomRepository.createRoom({ status: GameStatus.OPEN });
@@ -16,7 +18,14 @@ const connectPlayer = async (
 ): Promise<Optional<Partial<Player>>> => {
   const room = await getRoom(roomId);
   if (!room) {
-    throw new Error(`Room with id ${roomId} was not found`);
+    throw new NotFoundError(`Room with id ${roomId} was not found`);
+  }
+
+  if (await roomRepository.existsByNickname(roomId, nickname)) {
+    throw new EntityAlreadyExistsError(
+      `Player with nickname ${nickname} is already exists`,
+      nickname,
+    );
   }
 
   const player = await roomRepository.addPlayer(roomId, {
