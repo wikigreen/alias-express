@@ -1,6 +1,11 @@
 import React from "react";
 import { Badge, Box, Button, Chip, Popper } from "@mui/material";
+import {
+  AdminPanelSettings as AdminPanelSettingsIcon,
+  AccountCircle as AccountCircleIcon,
+} from "@mui/icons-material";
 import { useGameState } from "../../context/GameContext";
+import { Player } from "../../context/GameContext/types";
 
 export const PlayersList: React.FC = () => {
   const { players } = useGameState();
@@ -10,6 +15,20 @@ export const PlayersList: React.FC = () => {
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(anchorEl ? null : event.currentTarget);
   };
+
+  const renderPlayer: (player: Player) => React.ReactNode = ({
+    nickname,
+    online,
+    isAdmin,
+  }) => (
+    <Chip
+      key={nickname}
+      label={nickname}
+      icon={isAdmin ? <AdminPanelSettingsIcon /> : <AccountCircleIcon />}
+      color={online ? "success" : "default"}
+      variant={online ? "filled" : "outlined"}
+    />
+  );
 
   const open = Boolean(anchorEl);
 
@@ -47,17 +66,7 @@ export const PlayersList: React.FC = () => {
               if (a.online === b.online) return 0;
               return -a.online;
             }),
-          ].map(({ nickname, online }) => (
-            <Chip
-              key={nickname}
-              label={nickname}
-              sx={{
-                opacity: online ? 1 : 0.2,
-                backgroundColor: online ? "green" : "grey",
-                color: "white",
-              }}
-            />
-          ))}
+          ].map(renderPlayer)}
         </Box>
       </Popper>
     </>
