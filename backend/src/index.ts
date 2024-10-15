@@ -8,7 +8,7 @@ import { roomService } from "./room/roomService";
 import { Player } from "./room/types";
 import cookieParser from "cookie-parser";
 import { parse as parseCookies } from "cookie";
-import { gameRouter } from "./game/gameRoutes";
+import { gameRouter, protectedGameRouter } from "./game/gameRoutes";
 import { exceptionHandlingMiddleware } from "./common/routesExceptionHandler/exceptionHadlingMiddleware";
 
 dotenv.config();
@@ -33,6 +33,7 @@ apiRouter.use("/room", roomRouter);
 apiRouter.use("/room", protectedRoomRouter);
 
 apiRouter.use("/game", gameRouter);
+apiRouter.use("/game", protectedGameRouter);
 apiRouter.get("/ping", (req: Request, res: Response) => {
   res.send("pong");
 });
