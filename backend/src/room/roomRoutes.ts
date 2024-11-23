@@ -29,7 +29,8 @@ roomRouter.get("/:roomId", async (req, res, next) => {
     }
 
     const playerId = req.cookies?.[`room:${room.id}`];
-    res.send({ ...room, playerId });
+    const isAdmin = await roomService.isAdmin(req.params.roomId, playerId);
+    res.send({ ...room, playerId, isAdmin });
   } catch (err) {
     next(err);
   }
