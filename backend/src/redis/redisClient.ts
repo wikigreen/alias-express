@@ -7,7 +7,6 @@ export const createRedisClient = async (
   host = "127.0.0.1",
   port = "6379",
 ): Promise<ReturnType<typeof createClient>> => {
-  console.log(`redis://${host}:${port}`);
   const client = createClient({
     url: `redis://${host}:${port}`,
   });

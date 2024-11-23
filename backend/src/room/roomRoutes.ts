@@ -28,9 +28,7 @@ roomRouter.get("/:roomId", async (req, res, next) => {
       return;
     }
 
-    console.log({ "req.cookies": req.cookies });
     const playerId = req.cookies?.[`room:${room.id}`];
-    console.log({ "req.cookies:roomId": playerId });
     res.send({ ...room, playerId });
   } catch (err) {
     next(err);
@@ -40,7 +38,6 @@ roomRouter.get("/:roomId", async (req, res, next) => {
 roomRouter.post("/:roomId", async (req, res, next) => {
   try {
     const roomId = req.params.roomId;
-    console.log("body", req.body);
     const nickname = req.body?.nickname as string;
 
     if (!nickname) {

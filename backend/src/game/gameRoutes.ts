@@ -7,15 +7,11 @@ export const protectedGameRouter = Router();
 
 protectedGameRouter.use(async (req, res, next) => {
   const roomId = req.body?.roomId;
-  console.log("$roomId", roomId);
-  console.log("req", req);
   if (!roomId) {
     res.status(403).send("Access denied. Admins only.");
   }
   const playerId = req.cookies?.[`room:${roomId}`];
-  console.log("playerId", playerId);
   const isAdmin = await roomService.isAdmin(roomId, playerId);
-  console.log("isAdmin", isAdmin);
   if (isAdmin) {
     next();
   } else {
