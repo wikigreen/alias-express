@@ -1,8 +1,20 @@
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { Player } from "../room/types";
 import { parse as parseCookies } from "cookie";
 import { roomService } from "../room/roomService";
 import { createServer } from "node:http";
+
+const connectGameEvent = async (socket: Socket) => {
+
+  const { gameId } = socket?.handshake?.query as { gameId: string } || {};
+  if (!gameId) {
+    return;
+  }
+  socket.join(gameId);
+  socket.on("disconnect", () => {
+    socket.leave(gameId)
+  });
+};
 
 export const initSocketIo = (server: ReturnType<typeof createServer>) => {
   const socketio = new Server(server, {
@@ -60,6 +72,8 @@ export const initSocketIo = (server: ReturnType<typeof createServer>) => {
         });
     });
   });
+
+  socketio.on("connectGame", connectGameEvent);
 
   return socketio;
 };
