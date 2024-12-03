@@ -14,6 +14,7 @@ const createRoom = async (room: Omit<Room, "id">): Promise<Room> => {
   const roomResult: Room = {
     id: roomId,
     status: room.status,
+    currentGameId: null,
   };
 
   return roomResult;
@@ -30,6 +31,7 @@ const getRoom = async (roomId: string): Promise<Optional<Room>> => {
   const room: Room = {
     id: roomId,
     status: roomData.status as GameStatus,
+    currentGameId: roomData.currentGameId as GameStatus,
   };
 
   return room;
@@ -145,6 +147,19 @@ const fromRoomPlayerKey = (key: string) => {
   return { roomId, playerId };
 };
 
+const getRoomIdForPlayerId = async (playerId: string) => {
+  return redisClient.then(async (client) => {
+    const res = await client.scan(0, {
+      MATCH: getRoomPlayerKey(undefined, playerId),
+      COUNT: 1000,
+    });
+    console.log("res213", res);
+    console.log("getRoomPlayerKey", getRoomPlayerKey(undefined, playerId));
+    const { roomId } = fromRoomPlayerKey(res?.keys?.[0]);
+    return roomId;
+  });
+};
+
 export const roomRepository = {
   createRoom,
   getRoom,
@@ -154,4 +169,5 @@ export const roomRepository = {
   removePlayer,
   getPlayer,
   existsByNickname,
+  getRoomIdForPlayerId,
 };

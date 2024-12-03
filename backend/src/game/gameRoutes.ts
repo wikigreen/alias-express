@@ -21,6 +21,8 @@ protectedGameRouter.use(async (req, res, next) => {
 
 //Create game
 protectedGameRouter.post("/", async (req, res) => {
-  const room = await gameService.createGame(req.body);
+  const roomId = req.body?.roomId;
+  const playerId = req.cookies?.[`room:${roomId}`];
+  const room = await gameService.createGame(req.body, playerId);
   res.send(room);
 });

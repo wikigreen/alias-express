@@ -6,5 +6,6 @@ export enum GameStatus {
 
 export interface Room {
   id: string;
+  currentGameId: string | null;
   status: GameStatus;
 }

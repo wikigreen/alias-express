@@ -1,11 +1,16 @@
 import { AliasGameState, GameSettings, Team } from "./types";
 import { v4 as uuid } from "uuid";
 import { gameRepository } from "./gameRespository";
-import { socketio } from "../index"; // For generating unique IDs
+import { socketio } from "../index";
+import { Optional } from "../utils";
+import { roomService } from "../room/roomService"; // For generating unique IDs
 
 class GameService {
   // Create a new game with a unique gameId and copy words from the global list
-  async createGame(gameSettings: GameSettings): Promise<string> {
+  async createGame(
+    gameSettings: GameSettings,
+    playerId: string,
+  ): Promise<string> {
     const gameId = uuid(); // Generate a unique game ID
 
     // Initialize the game state (no players yet, empty teams)
@@ -26,7 +31,13 @@ class GameService {
     await this.addTeamToGame(gameId);
     await this.addTeamToGame(gameId);
 
-    socketio.to(gameId).emit(JSON.stringify(this.getFullGameState(gameId)));
+    roomService
+      .getRoomIdForPlayerId(playerId)
+      .then((roomId) =>
+        socketio
+          .to(roomId)
+          .emit("gameState", JSON.stringify(this.getFullGameState(gameId))),
+      );
 
     return gameId; // Return the unique game ID
   }
@@ -42,14 +53,22 @@ class GameService {
     };
 
     await gameRepository.saveTeam(gameId, team);
-    socketio.to(gameId).emit(JSON.stringify(this.getFullGameState(gameId)));
+    socketio
+      .to(gameId)
+      .emit("gameState", JSON.stringify(this.getFullGameState(gameId)));
   }
 
   async popNextWord(gameId: string): Promise<string | null> {
     return await gameRepository.popNextWord(gameId);
   }
 
-  async getFullGameState(gameId: string): Promise<AliasGameState | null> {
+  async getFullGameState(
+    gameId: Optional<string>,
+  ): Promise<AliasGameState | null> {
+    if (!gameId) {
+      return null;
+    }
+
     const game = await gameRepository.getGame(gameId);
 
     if (!game) {

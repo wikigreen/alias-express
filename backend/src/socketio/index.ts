@@ -1,19 +1,9 @@
-import { Server, Socket } from "socket.io";
+import { Server } from "socket.io";
 import { Player } from "../room/types";
 import { parse as parseCookies } from "cookie";
 import { roomService } from "../room/roomService";
 import { createServer } from "node:http";
-
-const connectGameEvent = async (socket: Socket) => {
-  const { gameId } = socket?.handshake?.query as { gameId: string } || {};
-  if (!gameId) {
-    return;
-  }
-  socket.join(gameId);
-  socket.on("disconnect", () => {
-    socket.leave(gameId)
-  });
-};
+import { gameService } from "../game/gameService";
 
 export const initSocketIo = (server: ReturnType<typeof createServer>) => {
   const socketio = new Server(server, {
@@ -54,6 +44,17 @@ export const initSocketIo = (server: ReturnType<typeof createServer>) => {
       socketio.to(roomId).emit("playerConnect", players);
     });
 
+    socket.on("connectGame", async () => {
+      const currentGameId = (await roomService.getRoom(roomId))?.currentGameId;
+      const state = gameService.getFullGameState(currentGameId);
+      if (state) {
+        socketio
+          .to(roomId)
+          .to(playerId)
+          .emit("gameState", JSON.stringify(state));
+      }
+    });
+
     socket.on("disconnect", () => {
       if (!player.id || !player.roomId) {
         return;
@@ -71,8 +72,6 @@ export const initSocketIo = (server: ReturnType<typeof createServer>) => {
         });
     });
   });
-
-  socketio.on("connectGame", connectGameEvent);
 
   return socketio;
 };
