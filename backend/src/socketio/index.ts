@@ -5,7 +5,6 @@ import { roomService } from "../room/roomService";
 import { createServer } from "node:http";
 
 const connectGameEvent = async (socket: Socket) => {
-
   const { gameId } = socket?.handshake?.query as { gameId: string } || {};
   if (!gameId) {
     return;

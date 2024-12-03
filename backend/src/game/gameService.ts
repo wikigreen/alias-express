@@ -1,6 +1,7 @@
 import { AliasGameState, GameSettings, Team } from "./types";
 import { v4 as uuid } from "uuid";
-import { gameRepository } from "./gameRespository"; // For generating unique IDs
+import { gameRepository } from "./gameRespository";
+import { socketio } from "../index"; // For generating unique IDs
 
 class GameService {
   // Create a new game with a unique gameId and copy words from the global list
@@ -25,6 +26,8 @@ class GameService {
     await this.addTeamToGame(gameId);
     await this.addTeamToGame(gameId);
 
+    socketio.to(gameId).emit(JSON.stringify(this.getFullGameState(gameId)));
+
     return gameId; // Return the unique game ID
   }
 
@@ -39,6 +42,7 @@ class GameService {
     };
 
     await gameRepository.saveTeam(gameId, team);
+    socketio.to(gameId).emit(JSON.stringify(this.getFullGameState(gameId)));
   }
 
   async popNextWord(gameId: string): Promise<string | null> {
