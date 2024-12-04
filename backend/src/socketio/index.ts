@@ -46,12 +46,9 @@ export const initSocketIo = (server: ReturnType<typeof createServer>) => {
 
     socket.on("connectGame", async () => {
       const currentGameId = (await roomService.getRoom(roomId))?.currentGameId;
-      const state = gameService.getFullGameState(currentGameId);
+      const state = await gameService.getFullGameState(currentGameId);
       if (state) {
-        socketio
-          .to(roomId)
-          .to(playerId)
-          .emit("gameState", JSON.stringify(state));
+        socketio.to(roomId).to(playerId).emit("gameState", state);
       }
     });
 

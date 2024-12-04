@@ -30,9 +30,9 @@ class GameService {
     await this.addTeamToGame(gameId);
     await this.addTeamToGame(gameId);
 
-    socketio
-      .to(roomId)
-      .emit("gameState", JSON.stringify(this.getFullGameState(gameId)));
+    this.getFullGameState(gameId).then((state) =>
+      socketio.to(roomId).emit("gameState", state),
+    );
 
     return gameId; // Return the unique game ID
   }
@@ -48,9 +48,9 @@ class GameService {
     };
 
     await gameRepository.saveTeam(gameId, team);
-    socketio
-      .to(gameId)
-      .emit("gameState", JSON.stringify(this.getFullGameState(gameId)));
+    this.getFullGameState(gameId).then((state) =>
+      socketio.to(gameId).emit("gameState", state),
+    );
   }
 
   async popNextWord(gameId: string): Promise<string | null> {
@@ -65,7 +65,8 @@ class GameService {
     }
 
     const game = await gameRepository.getGame(gameId);
-
+    // console.log("getFullGameState", game);
+    console.log("getFullGameState1", game);
     if (!game) {
       return null;
     }
