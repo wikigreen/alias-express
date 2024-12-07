@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Badge, Box, Button, Chip, Popper } from "@mui/material";
 import {
   AdminPanelSettings as AdminPanelSettingsIcon,
@@ -8,11 +8,7 @@ import { useGameState } from "../../context/GameContext";
 import { Player } from "../../context/GameContext/types";
 
 export const PlayersList: React.FC = () => {
-  const { players, gameState } = useGameState();
-
-  useEffect(() => {
-    console.log({ gameState });
-  }, [gameState]);
+  const { players } = useGameState();
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 

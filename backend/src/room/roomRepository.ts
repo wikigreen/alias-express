@@ -1,7 +1,7 @@
 import { redisClient } from "../redis";
 import { GameStatus, Player, Room } from "./types";
 import { randomUUID } from "node:crypto";
-import { Optional } from "../utils";
+import { Optional, stringifyObjectValues } from "../utils";
 
 const createRoom = async (room: Omit<Room, "id">): Promise<Room> => {
   const roomId = randomUUID();
@@ -18,6 +18,16 @@ const createRoom = async (room: Omit<Room, "id">): Promise<Room> => {
   };
 
   return roomResult;
+};
+
+const updateRoom = async ({
+  id: roomId,
+  ...room
+}: Partial<Room>): Promise<void> => {
+  const roomKey = getRoomKey(roomId);
+  await redisClient.then((client) =>
+    client.hSet(roomKey, stringifyObjectValues(room)),
+  );
 };
 
 const getRoom = async (roomId: string): Promise<Optional<Room>> => {
@@ -153,8 +163,6 @@ const getRoomIdForPlayerId = async (playerId: string) => {
       MATCH: getRoomPlayerKey(undefined, playerId),
       COUNT: 1000,
     });
-    console.log("res213", res);
-    console.log("getRoomPlayerKey", getRoomPlayerKey(undefined, playerId));
     const { roomId } = fromRoomPlayerKey(res?.keys?.[0]);
     return roomId;
   });
@@ -170,4 +178,5 @@ export const roomRepository = {
   getPlayer,
   existsByNickname,
   getRoomIdForPlayerId,
+  updateRoom,
 };

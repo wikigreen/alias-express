@@ -96,7 +96,11 @@ const isAdmin = async (
 };
 
 const getRoomIdForPlayerId = async (playerId: string): Promise<string> => {
-  return await roomRepository.getRoomIdForPlayerId(playerId)
+  return await roomRepository.getRoomIdForPlayerId(playerId);
+};
+
+const setGameId = async (roomId: string, gameId: string): Promise<void> => {
+  await roomRepository.updateRoom({ id: roomId, currentGameId: gameId });
 };
 
 export const roomService = {
@@ -109,5 +113,6 @@ export const roomService = {
   disconnectPlayer,
   getPlayer,
   isAdmin,
-  getRoomIdForPlayerId
+  getRoomIdForPlayerId,
+  setGameId,
 };

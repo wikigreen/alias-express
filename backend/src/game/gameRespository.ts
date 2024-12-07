@@ -18,6 +18,8 @@ class GameRepository {
       roundStartedAt: gameData.roundStartedAt
         ? gameData.roundStartedAt.toISOString()
         : "",
+      winningScore: gameData?.gameSettings?.winningScore?.toString() || "",
+      roundTime: gameData?.gameSettings?.winningScore?.toString() || "",
     });
   }
 

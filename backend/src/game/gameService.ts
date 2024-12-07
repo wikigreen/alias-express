@@ -3,6 +3,7 @@ import { v4 as uuid } from "uuid";
 import { gameRepository } from "./gameRespository";
 import { socketio } from "../index";
 import { Optional } from "../utils";
+import { roomService } from "../room/roomService";
 
 class GameService {
   // Create a new game with a unique gameId and copy words from the global list
@@ -23,6 +24,7 @@ class GameService {
 
     // Save game metadata (excluding teams)
     await gameRepository.saveGameMetadata(gameId, gameState);
+    roomService.setGameId(roomId, gameId);
 
     // Copy words from the global 'simpleWords' list to the game's word list
     const words = await gameRepository.getSimpleWords();
@@ -65,8 +67,6 @@ class GameService {
     }
 
     const game = await gameRepository.getGame(gameId);
-    // console.log("getFullGameState", game);
-    console.log("getFullGameState1", game);
     if (!game) {
       return null;
     }
