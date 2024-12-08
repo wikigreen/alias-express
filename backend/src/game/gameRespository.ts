@@ -1,4 +1,4 @@
-import { Team, AliasGameState } from "./types";
+import { AliasGameState, Team } from "./types";
 import { redisClient } from "../redis";
 
 class GameRepository {
@@ -26,8 +26,8 @@ class GameRepository {
   // Save a specific team in the game
   async saveTeam(gameId: string, team: Team): Promise<void> {
     const client = await redisClient;
+    // Save the team metadata (score and describer)
     await client.hSet(`${this.redisPrefix}${gameId}:team:${team.id}`, {
-      players: JSON.stringify(team.players),
       describer: team.describer,
       score: team.score.toString(),
     });
@@ -106,18 +106,85 @@ class GameRepository {
     };
   }
 
+  // Get a team by ID
   async getTeam(gameId: string, teamId: string): Promise<Team> {
     const client = await redisClient;
     const teamKey = `${this.redisPrefix}${gameId}:team:${teamId}`;
 
     const teamData = await client.hGetAll(teamKey);
+    const players = await client.lRange(`${teamKey}:players`, 0, -1); // Fetch players from Redis list
 
     return {
       id: teamId,
-      players: JSON.parse(teamData.players || "[]"), // Default to an empty array if no players
+      players,
       describer: teamData.describer || "",
       score: parseInt(teamData.score, 10) || 0,
     };
+  }
+
+  // Add a player to a team
+  async addPlayerToTeam(
+    gameId: string,
+    teamId: string,
+    playerId: string,
+  ): Promise<void> {
+    const client = await redisClient;
+    const teamKey = `${this.redisPrefix}${gameId}:team:${teamId}`;
+
+    // Only add the player if they are not already in the team (check Redis list)
+    const playerExists = await client.lPos(`${teamKey}:players`, playerId);
+    if (playerExists === null) {
+      await client.lPush(`${teamKey}:players`, playerId); // Add player to the list
+    }
+  }
+
+  // Remove a player from a team
+  async removePlayerFromTeam(
+    gameId: string,
+    teamId: string,
+    playerId: string,
+  ): Promise<void> {
+    const client = await redisClient;
+    const teamKey = `${this.redisPrefix}${gameId}:team:${teamId}`;
+
+    // Remove player from the Redis list
+    await client.lRem(`${teamKey}:players`, 0, playerId); // 0 means remove all occurrences
+  }
+
+  // Get all player IDs from a team
+  async getAllPlayerIdsFromTeam(
+    gameId: string,
+    teamId: string,
+  ): Promise<string[]> {
+    const client = await redisClient;
+    const teamKey = `${this.redisPrefix}${gameId}:team:${teamId}`;
+
+    // Retrieve all players from the Redis list
+    const players = await client.lRange(`${teamKey}:players`, 0, -1);
+    return players || [];
+  }
+
+  // Check if a player exists in a team
+  async isPlayerInTeam(
+    gameId: string,
+    teamId: string,
+    playerId: string,
+  ): Promise<boolean> {
+    const client = await redisClient;
+    const teamKey = `${this.redisPrefix}${gameId}:team:${teamId}`;
+
+    // Use lPos to check if the player exists in the list (returns index or null)
+    const playerExists = await client.lPos(`${teamKey}:players`, playerId);
+    return playerExists !== null;
+  }
+
+  // Optional: Clear all players from a team
+  async clearTeam(gameId: string, teamId: string): Promise<void> {
+    const client = await redisClient;
+    const teamKey = `${this.redisPrefix}${gameId}:team:${teamId}`;
+
+    // Remove all players from the Redis list
+    await client.del(`${teamKey}:players`);
   }
 }
 

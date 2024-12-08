@@ -1,11 +1,6 @@
-type Player = {
-  id: string;
-  name: string;
-};
-
 export type Team = {
   id: string;
-  players: Player[];
+  players: string[];
   describer: string;
   score: number;
 };
