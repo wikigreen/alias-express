@@ -1,5 +1,6 @@
 import { AliasGameState, Team } from "./types";
 import { redisClient } from "../redis";
+import { stringifyObjectValues } from "../utils";
 
 class GameRepository {
   private readonly redisPrefix = "game:";
@@ -10,17 +11,14 @@ class GameRepository {
     gameData: Partial<AliasGameState>,
   ): Promise<void> {
     const client = await redisClient;
-    await client.hSet(`${this.redisPrefix}${gameId}`, {
-      currentWord: gameData.currentWord || "",
-      currentTeam: gameData.currentTeam || "",
-      remainingTime: gameData.remainingTime?.toString() || "0",
-      gameStatus: gameData.gameStatus || "",
-      roundStartedAt: gameData.roundStartedAt
-        ? gameData.roundStartedAt.toISOString()
-        : "",
-      winningScore: gameData?.gameSettings?.winningScore?.toString() || "",
-      roundTime: gameData?.gameSettings?.roundTime?.toString() || "",
-    });
+
+    await client.hSet(
+      `${this.redisPrefix}${gameId}`,
+      stringifyObjectValues({
+        ...gameData,
+        ...gameData?.gameSettings,
+      }),
+    );
   }
 
   // Save a specific team in the game
@@ -87,6 +85,7 @@ class GameRepository {
     );
 
     return {
+      id: gameId,
       teams,
       currentWord: gameData.currentWord || null,
       currentTeam: gameData.currentTeam || "",

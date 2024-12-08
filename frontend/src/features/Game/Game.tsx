@@ -11,7 +11,7 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import { useJoinTeamMutation } from "./services";
+import { useJoinTeamMutation, useStartGameMutation } from "./services";
 import { JoinTeamRequest } from "./types";
 
 interface GameFormProps {
@@ -22,6 +22,7 @@ interface GameFormProps {
 const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
   const { gameState: data } = useGameState();
   const [joinTeam] = useJoinTeamMutation();
+  const [startGame] = useStartGameMutation();
 
   useEffect(() => {
     console.log({ data });
@@ -40,6 +41,19 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
     }
   };
 
+  const handleStartGame = async (gameId: string) => {
+    const req = {
+      roomId,
+      gameId,
+    };
+
+    try {
+      await startGame(req);
+    } catch (error) {
+      console.error("Failed to start game:", gameId, error);
+    }
+  };
+
   if (!data) {
     return <GameForm isAdmin={isAdmin} roomId={roomId} />;
   }
@@ -49,11 +63,15 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
       <Typography variant="h4" gutterBottom>
         Game
       </Typography>
+      <Button onClick={() => handleStartGame(data?.id)}>Start game</Button>
       <Divider sx={{ marginBottom: 2 }} />
 
       {/* Game Status Section */}
       <CardContent>
         <Typography variant="h6">Game Status</Typography>
+        <Typography>
+          ID: <strong>{data.id}</strong>
+        </Typography>
         <Typography>
           Status: <strong>{data.gameStatus}</strong>
         </Typography>

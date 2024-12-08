@@ -13,6 +13,7 @@ export const GameStateContext = createContext<GameStateContextType>(
 );
 
 type AliasGameState = {
+  id: string;
   teams: Team[];
   currentWord: string | null;
   currentTeam: string;

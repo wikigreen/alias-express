@@ -82,7 +82,21 @@ class GameService {
     }
     await gameRepository.addPlayerToTeam(gameId, teamId, playerId);
     this.getFullGameState(gameId).then((state) =>
-        socketio.to(roomId).emit("gameState", state),
+      socketio.to(roomId).emit("gameState", state),
+    );
+  }
+
+  async startGame(roomId?: string, gameId?: string) {
+    if (!roomId || !gameId) {
+      return;
+    }
+
+    await gameRepository.saveGameMetadata(gameId, {
+      gameStatus: "ongoing",
+    });
+
+    this.getFullGameState(gameId).then((state) =>
+      socketio.to(roomId).emit("gameState", state),
     );
   }
 }

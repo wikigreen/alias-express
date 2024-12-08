@@ -25,7 +25,16 @@ protectedGameRouter.post("/", async (req, res) => {
   res.send(room);
 });
 
-//Create game
+//Start game
+protectedGameRouter.post("/start", async (req, res) => {
+  const { id: roomId, currentGameId: gameId } =
+    (await roomService.getRoom(req.body?.roomId)) || {};
+  await gameService.startGame(roomId, gameId as string);
+  res.status(204);
+  res.send();
+});
+
+//Join team
 gameRouter.post("/team", async (req, res) => {
   const roomId = req.body?.roomId;
   const playerId = req.cookies?.[`room:${roomId}`];

@@ -13,6 +13,7 @@ export type GameSettings = {
 type GameStatus = "waiting" | "ongoing" | "paused" | "completed";
 
 export type AliasGameState = {
+  id: string;
   teams: Team[];
   currentWord: string | null;
   currentTeam: string;
