@@ -9,9 +9,14 @@ function logMessageHelper(
   const [, , callerFunctionCall] = error?.stack?.split("\n") || [];
 
   logFn(
-    `[${type}] ${message.map((o) => String(o)).join(" ")} (Called from: ${
-      callerFunctionCall || "Unknown location"
-    })`,
+    `[${type}] ${message
+      .map((o) => {
+        if (o === Object(o)) {
+          return JSON.stringify(o);
+        }
+        return String(o);
+      })
+      .join(" ")} (Called from: ${callerFunctionCall || "Unknown location"})`,
   );
 }
 
