@@ -7,7 +7,6 @@ export const transformErrorResponse = (
   responseBody: unknown,
   { response }: FetchBaseQueryMeta,
 ): ErrorType => {
-  console.log({ responseBody });
   if (status("Conflict") === response?.status) {
     return {
       errorType: "ALREADY_EXISTS",

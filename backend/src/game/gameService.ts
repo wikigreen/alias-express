@@ -1,10 +1,16 @@
 import { AliasGameState, GameSettings, Team } from "./types";
 import { v4 as uuid } from "uuid";
-import { gameRepository } from "./gameRespository"; // For generating unique IDs
+import { gameRepository } from "./gameRespository";
+import { socketio } from "../index";
+import { Optional } from "../utils";
+import { roomService } from "../room/roomService";
 
 class GameService {
   // Create a new game with a unique gameId and copy words from the global list
-  async createGame(gameSettings: GameSettings): Promise<string> {
+  async createGame({
+    roomId,
+    ...gameSettings
+  }: GameSettings & { roomId: string }): Promise<string> {
     const gameId = uuid(); // Generate a unique game ID
 
     // Initialize the game state (no players yet, empty teams)
@@ -18,12 +24,17 @@ class GameService {
 
     // Save game metadata (excluding teams)
     await gameRepository.saveGameMetadata(gameId, gameState);
+    await roomService.setGameId(roomId, gameId);
 
     // Copy words from the global 'simpleWords' list to the game's word list
     const words = await gameRepository.getSimpleWords();
     await gameRepository.copyWordsToGame(gameId, words);
     await this.addTeamToGame(gameId);
     await this.addTeamToGame(gameId);
+
+    this.getFullGameState(gameId).then((state) =>
+      socketio.to(roomId).emit("gameState", state),
+    );
 
     return gameId; // Return the unique game ID
   }
@@ -39,15 +50,23 @@ class GameService {
     };
 
     await gameRepository.saveTeam(gameId, team);
+    this.getFullGameState(gameId).then((state) =>
+      socketio.to(gameId).emit("gameState", state),
+    );
   }
 
   async popNextWord(gameId: string): Promise<string | null> {
     return await gameRepository.popNextWord(gameId);
   }
 
-  async getFullGameState(gameId: string): Promise<AliasGameState | null> {
-    const game = await gameRepository.getGame(gameId);
+  async getFullGameState(
+    gameId: Optional<string>,
+  ): Promise<AliasGameState | null> {
+    if (!gameId) {
+      return null;
+    }
 
+    const game = await gameRepository.getGame(gameId);
     if (!game) {
       return null;
     }

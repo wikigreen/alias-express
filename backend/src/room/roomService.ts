@@ -1,11 +1,14 @@
 import { GameStatus, Room, Player } from "./types";
 import { roomRepository } from "./roomRepository";
 import { Optional } from "../utils";
-import { NotFoundError } from "../common/routesExceptionHandler/exceptions";
-import { EntityAlreadyExistsError } from "../common/routesExceptionHandler/exceptions/EntityAlreadyExistsError";
+import { NotFoundError } from "../common/routesExceptionHandler";
+import { EntityAlreadyExistsError } from "../common/routesExceptionHandler";
 
 const createRoom = async (): Promise<Room> => {
-  return roomRepository.createRoom({ status: GameStatus.OPEN });
+  return roomRepository.createRoom({
+    status: GameStatus.OPEN,
+    currentGameId: null,
+  });
 };
 
 const getRoom = async (roomId: Room["id"]): Promise<Optional<Room>> => {
@@ -92,6 +95,14 @@ const isAdmin = async (
   return !!(await roomRepository.getPlayer(roomId, playerId))?.isAdmin;
 };
 
+const getRoomIdForPlayerId = async (playerId: string): Promise<string> => {
+  return await roomRepository.getRoomIdForPlayerId(playerId);
+};
+
+const setGameId = async (roomId: string, gameId: string): Promise<void> => {
+  await roomRepository.updateRoom({ id: roomId, currentGameId: gameId });
+};
+
 export const roomService = {
   createRoom,
   getRoom,
@@ -102,4 +113,6 @@ export const roomService = {
   disconnectPlayer,
   getPlayer,
   isAdmin,
+  getRoomIdForPlayerId,
+  setGameId,
 };

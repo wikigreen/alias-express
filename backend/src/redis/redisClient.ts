@@ -1,4 +1,5 @@
 import { createClient } from "redis";
+import {logErrorMessage, logMessage} from "../utils";
 
 const HOST = process.env.REDIS_HOST || "localhost";
 const PORT = process.env.REDIS_PORT || "6379";
@@ -7,7 +8,6 @@ export const createRedisClient = async (
   host = "127.0.0.1",
   port = "6379",
 ): Promise<ReturnType<typeof createClient>> => {
-  console.log(`redis://${host}:${port}`);
   const client = createClient({
     url: `redis://${host}:${port}`,
   });
@@ -15,11 +15,11 @@ export const createRedisClient = async (
   await client.connect();
 
   client.on("connect", () => {
-    console.log(`Connected to Redis at ${host}:${port}`);
+    logMessage(`Connected to Redis at ${host}:${port}`);
   });
 
   client.on("error", (err) => {
-    console.error("Redis error:", err);
+    logErrorMessage("Redis error:", err);
   });
 
   return client;

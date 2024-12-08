@@ -1,7 +1,7 @@
 import { redisClient } from "../redis";
 import { GameStatus, Player, Room } from "./types";
 import { randomUUID } from "node:crypto";
-import { Optional } from "../utils";
+import { Optional, stringifyObjectValues } from "../utils";
 
 const createRoom = async (room: Omit<Room, "id">): Promise<Room> => {
   const roomId = randomUUID();
@@ -14,11 +14,20 @@ const createRoom = async (room: Omit<Room, "id">): Promise<Room> => {
   const roomResult: Room = {
     id: roomId,
     status: room.status,
+    currentGameId: null,
   };
 
-  console.log(`Created room: ${JSON.stringify(roomResult)}`);
-
   return roomResult;
+};
+
+const updateRoom = async ({
+  id: roomId,
+  ...room
+}: Partial<Room>): Promise<void> => {
+  const roomKey = getRoomKey(roomId);
+  await redisClient.then((client) =>
+    client.hSet(roomKey, stringifyObjectValues(room)),
+  );
 };
 
 const getRoom = async (roomId: string): Promise<Optional<Room>> => {
@@ -26,24 +35,21 @@ const getRoom = async (roomId: string): Promise<Optional<Room>> => {
   const roomData = await redisClient.then((client) => client.hGetAll(roomKey));
 
   if (Object.keys(roomData).length === 0) {
-    console.log(`Room ${roomId} not found`);
     return null;
   }
 
   const room: Room = {
     id: roomId,
     status: roomData.status as GameStatus,
+    currentGameId: roomData.currentGameId as GameStatus,
   };
 
-  console.log(`Room ${roomId}:`, room);
   return room;
 };
 
 const addPlayer = async (roomId: string, player: Player): Promise<Player> => {
-  console.log("Start addPlayer");
   const playerId = randomUUID();
   const playerKey = getRoomPlayerKey(roomId, playerId);
-  console.log("1 addPlayer", player);
   await redisClient.then((client) =>
     client.hSet(playerKey, {
       roomId,
@@ -60,7 +66,6 @@ const addPlayer = async (roomId: string, player: Player): Promise<Player> => {
     isAdmin: false,
   };
 
-  console.log(`Player saved ${roomId}:`, resPlayer);
   return resPlayer;
 };
 
@@ -76,10 +81,6 @@ const updatePlayer = async (
   player: Partial<Player>,
 ): Promise<Partial<Player>> => {
   const playerKey = getRoomPlayerKey(player.roomId, player.id);
-  console.log("player key", playerKey);
-  console.log("player in online", player.online);
-  console.log("player in admin", player.isAdmin);
-  console.log("player in admin", player);
   await redisClient.then((client) => {
     const result = {
       ...(player.roomId ? { roomId: player.roomId } : {}),
@@ -88,12 +89,8 @@ const updatePlayer = async (
       ...(player.isAdmin != null ? { isAdmin: +player.isAdmin } : {}),
     };
 
-    console.log("Result of update is before ", JSON.stringify(result));
-
     client.hSet(playerKey, result);
   });
-
-  console.log(`Player is updated ${player.id}`);
 
   const resPlayer: Partial<Player> = {
     id: player.id,
@@ -103,7 +100,6 @@ const updatePlayer = async (
     isAdmin: player.isAdmin,
   };
 
-  console.log(`Player saved ${resPlayer.roomId}:`, resPlayer);
   return resPlayer;
 };
 
@@ -161,6 +157,17 @@ const fromRoomPlayerKey = (key: string) => {
   return { roomId, playerId };
 };
 
+const getRoomIdForPlayerId = async (playerId: string) => {
+  return redisClient.then(async (client) => {
+    const res = await client.scan(0, {
+      MATCH: getRoomPlayerKey(undefined, playerId),
+      COUNT: 1000,
+    });
+    const { roomId } = fromRoomPlayerKey(res?.keys?.[0]);
+    return roomId;
+  });
+};
+
 export const roomRepository = {
   createRoom,
   getRoom,
@@ -170,4 +177,6 @@ export const roomRepository = {
   removePlayer,
   getPlayer,
   existsByNickname,
+  getRoomIdForPlayerId,
+  updateRoom,
 };
