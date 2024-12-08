@@ -32,7 +32,6 @@ export const initSocketIo = (server: ReturnType<typeof createServer>) => {
       socket.disconnect();
       return;
     }
-    // After receiving game id subscribe to it on the frontend. After updating game state in service just emit it to {gameId}, same might be done for word receiving
     socket.join(roomId);
     socket.join(playerId);
     await roomService.updatePlayer({

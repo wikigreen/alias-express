@@ -19,7 +19,7 @@ class GameRepository {
         ? gameData.roundStartedAt.toISOString()
         : "",
       winningScore: gameData?.gameSettings?.winningScore?.toString() || "",
-      roundTime: gameData?.gameSettings?.winningScore?.toString() || "",
+      roundTime: gameData?.gameSettings?.roundTime?.toString() || "",
     });
   }
 

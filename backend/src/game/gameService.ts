@@ -24,7 +24,7 @@ class GameService {
 
     // Save game metadata (excluding teams)
     await gameRepository.saveGameMetadata(gameId, gameState);
-    roomService.setGameId(roomId, gameId);
+    await roomService.setGameId(roomId, gameId);
 
     // Copy words from the global 'simpleWords' list to the game's word list
     const words = await gameRepository.getSimpleWords();
