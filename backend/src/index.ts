@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import { gameRouter, protectedGameRouter } from "./game/gameRoutes";
 import { exceptionHandlingMiddleware } from "./common/routesExceptionHandler/exceptionHadlingMiddleware";
 import {initSocketIo} from "./socketio";
+import {logMessage} from "./utils";
 
 dotenv.config();
 
@@ -38,7 +39,7 @@ apiRouter.get("/ping", (req: Request, res: Response) => {
 apiRouter.use(exceptionHandlingMiddleware);
 
 server.listen(port, () => {
-  console.log(
+  logMessage(
     `[server]: Server is running at http://localhost:${port}/api/ping`,
   );
 });

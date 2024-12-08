@@ -1,4 +1,5 @@
 import { createClient } from "redis";
+import {logErrorMessage, logMessage} from "../utils";
 
 const HOST = process.env.REDIS_HOST || "localhost";
 const PORT = process.env.REDIS_PORT || "6379";
@@ -14,11 +15,11 @@ export const createRedisClient = async (
   await client.connect();
 
   client.on("connect", () => {
-    console.log(`Connected to Redis at ${host}:${port}`);
+    logMessage(`Connected to Redis at ${host}:${port}`);
   });
 
   client.on("error", (err) => {
-    console.error("Redis error:", err);
+    logErrorMessage("Redis error:", err);
   });
 
   return client;
