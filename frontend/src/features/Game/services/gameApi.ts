@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { GameSettings } from "../types";
+import {GameSettings, JoinTeamRequest} from "../types";
 
 export const gameApi = createApi({
   reducerPath: "gameApi",
@@ -12,7 +12,14 @@ export const gameApi = createApi({
         body,
       }),
     }),
+    joinTeam: builder.mutation<void, JoinTeamRequest>({
+      query: (body) => ({
+        url: "team",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
-export const { useCreateGameMutation } = gameApi;
+export const { useCreateGameMutation, useJoinTeamMutation } = gameApi;

@@ -24,7 +24,7 @@ type AliasGameState = {
 
 export type Team = {
   id: string;
-  players: Player[];
+  players: string[];
   describer: string;
   score: number;
 };

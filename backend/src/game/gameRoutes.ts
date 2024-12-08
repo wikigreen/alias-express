@@ -24,3 +24,12 @@ protectedGameRouter.post("/", async (req, res) => {
   const room = await gameService.createGame(req.body);
   res.send(room);
 });
+
+//Create game
+gameRouter.post("/team", async (req, res) => {
+  const roomId = req.body?.roomId;
+  const playerId = req.cookies?.[`room:${roomId}`];
+  await gameService.joinTeam(roomId, req.body?.teamId, playerId);
+  res.status(204);
+  res.send();
+});
