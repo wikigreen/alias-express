@@ -3,6 +3,7 @@ export type Team = {
   players: string[];
   describer: string;
   score: number;
+  name: string;
 };
 
 export type GameSettings = {

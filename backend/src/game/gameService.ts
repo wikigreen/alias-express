@@ -2,7 +2,7 @@ import { AliasGameState, GameSettings, Team } from "./types";
 import { v4 as uuid } from "uuid";
 import { gameRepository } from "./gameRespository";
 import { socketio } from "../index";
-import { Optional } from "../utils";
+import { debugMessage, Optional } from "../utils";
 import { roomService } from "../room/roomService";
 
 class GameService {
@@ -29,8 +29,8 @@ class GameService {
     // Copy words from the global 'simpleWords' list to the game's word list
     const words = await gameRepository.getSimpleWords();
     await gameRepository.copyWordsToGame(gameId, words);
-    await this.addTeamToGame(gameId);
-    await this.addTeamToGame(gameId);
+    await this.addTeamToGame(gameId, { name: "Team A" });
+    await this.addTeamToGame(gameId, { name: "Team B" });
 
     this.getFullGameState(gameId).then((state) =>
       socketio.to(roomId).emit("gameState", state),
@@ -39,14 +39,19 @@ class GameService {
     return gameId; // Return the unique game ID
   }
 
-  async addTeamToGame(gameId: string): Promise<void> {
+  async addTeamToGame(
+    gameId: string,
+    teamSettings: Partial<Team> = {},
+  ): Promise<void> {
     const teamId = uuid(); // Generate a unique team ID
 
     const team: Team = {
       id: teamId,
-      players: [], // No players initially
-      describer: "", // No describer yet
-      score: 0, // Initial score is 0
+      players: [],
+      describer: "",
+      score: 0,
+      name: teamId,
+      ...teamSettings,
     };
 
     await gameRepository.saveTeam(gameId, team);
@@ -81,6 +86,7 @@ class GameService {
       await gameRepository.removePlayerFromTeam(gameId, tId, playerId);
     }
     await gameRepository.addPlayerToTeam(gameId, teamId, playerId);
+
     this.getFullGameState(gameId).then((state) =>
       socketio.to(roomId).emit("gameState", state),
     );

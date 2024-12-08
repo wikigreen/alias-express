@@ -1,6 +1,6 @@
 import { AliasGameState, Team } from "./types";
 import { redisClient } from "../redis";
-import { stringifyObjectValues } from "../utils";
+import { debugMessage, stringifyObjectValues } from "../utils";
 
 class GameRepository {
   private readonly redisPrefix = "game:";
@@ -28,6 +28,7 @@ class GameRepository {
     await client.hSet(`${this.redisPrefix}${gameId}:team:${team.id}$`, {
       describer: team.describer,
       score: team.score.toString(),
+      name: team.name,
     });
   }
 
@@ -79,7 +80,7 @@ class GameRepository {
     const teamKeys = await client.keys(`${this.redisPrefix}${gameId}:team:*$`);
     const teams: Team[] = await Promise.all(
       teamKeys.map(async (key) => {
-        const teamId = key.split(":").pop(); // Extract teamId from key
+        const teamId = key.split(":").pop()?.replace("$", ""); // Extract teamId from key
         return await this.getTeam(gameId, teamId!);
       }),
     );
@@ -117,6 +118,7 @@ class GameRepository {
       id: teamId,
       players,
       describer: teamData.describer || "",
+      name: teamData.name || "",
       score: parseInt(teamData.score, 10) || 0,
     };
   }
@@ -127,12 +129,12 @@ class GameRepository {
     const teamKey = `${this.redisPrefix}${gameId}:team:*$`;
     const teamKeys = await client.keys(teamKey);
 
-    return teamKeys.map((key) => key.split(":")?.[3]);
+    return teamKeys.map((key) => key.split(":")?.[3]?.replace("$", ""));
   }
 
   // Get a team by ID
   async getGameIdForTeamId(teamId: string): Promise<string> {
-    const teamKey = `${this.redisPrefix}*:team:${teamId}`;
+    const teamKey = `${this.redisPrefix}*:team:${teamId}$`;
 
     return redisClient.then(async (client) => {
       const res = await client.scan(0, {
@@ -167,6 +169,7 @@ class GameRepository {
     playerId: string,
   ): Promise<void> {
     const client = await redisClient;
+
     const teamKey = `${this.redisPrefix}${gameId}:team:${teamId}`;
 
     // Remove player from the Redis list

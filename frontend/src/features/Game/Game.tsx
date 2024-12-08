@@ -106,11 +106,11 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         Teams
       </Typography>
       <Grid container spacing={2}>
-        {data.teams.map((team, index) => (
+        {data.teams.map((team) => (
           <Grid item xs={12} sm={6} key={team.id}>
             <Card>
               <CardContent>
-                <Typography variant="subtitle1">Team {index + 1}</Typography>
+                <Typography variant="subtitle1">Name: {team.name}</Typography>
                 <Typography>ID: {team.id}</Typography>
                 <Typography>
                   Score: <strong>{team.score}</strong>
