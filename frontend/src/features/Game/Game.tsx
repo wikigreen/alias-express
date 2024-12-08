@@ -3,12 +3,16 @@ import GameForm from "./CreateGame/GameForm.tsx";
 import { useGameState } from "../../context/GameContext";
 import {
   Box,
+  Button,
   Card,
+  CardActions,
   CardContent,
   Divider,
   Grid,
   Typography,
 } from "@mui/material";
+import { useJoinTeamMutation } from "./services";
+import { JoinTeamRequest } from "./types";
 
 interface GameFormProps {
   roomId: string;
@@ -17,10 +21,24 @@ interface GameFormProps {
 
 const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
   const { gameState: data } = useGameState();
+  const [joinTeam] = useJoinTeamMutation();
 
   useEffect(() => {
     console.log({ data });
   }, [data]);
+
+  const handleJoinTeam = async (teamId: string) => {
+    const gameSettings: JoinTeamRequest = {
+      roomId,
+      teamId,
+    };
+
+    try {
+      await joinTeam(gameSettings);
+    } catch (error) {
+      console.error("Failed to joinTeam:", teamId, error);
+    }
+  };
 
   if (!data) {
     return <GameForm isAdmin={isAdmin} roomId={roomId} />;
@@ -49,7 +67,6 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
           Remaining Time: <strong>{data.remainingTime} seconds</strong>
         </Typography>
       </CardContent>
-      <Card sx={{ marginBottom: 2 }}></Card>
 
       {/* Game Settings Section */}
       <Card sx={{ marginBottom: 2 }}>
@@ -87,13 +104,16 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
                 {team.players.length > 0 ? (
                   <ul>
                     {team.players.map((player) => (
-                      <li key={player.id}>{player.nickname}</li>
+                      <li key={player}>{player}</li>
                     ))}
                   </ul>
                 ) : (
                   <Typography>No players</Typography>
                 )}
               </CardContent>
+              <CardActions>
+                <Button onClick={() => handleJoinTeam(team.id)}>Join</Button>
+              </CardActions>
             </Card>
           </Grid>
         ))}

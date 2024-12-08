@@ -27,7 +27,7 @@ class GameRepository {
   async saveTeam(gameId: string, team: Team): Promise<void> {
     const client = await redisClient;
     // Save the team metadata (score and describer)
-    await client.hSet(`${this.redisPrefix}${gameId}:team:${team.id}`, {
+    await client.hSet(`${this.redisPrefix}${gameId}:team:${team.id}$`, {
       describer: team.describer,
       score: team.score.toString(),
     });
@@ -78,7 +78,7 @@ class GameRepository {
     }
 
     // Fetch all teams for the game
-    const teamKeys = await client.keys(`${this.redisPrefix}${gameId}:team:*`);
+    const teamKeys = await client.keys(`${this.redisPrefix}${gameId}:team:*$`);
     const teams: Team[] = await Promise.all(
       teamKeys.map(async (key) => {
         const teamId = key.split(":").pop(); // Extract teamId from key
@@ -111,7 +111,7 @@ class GameRepository {
     const client = await redisClient;
     const teamKey = `${this.redisPrefix}${gameId}:team:${teamId}`;
 
-    const teamData = await client.hGetAll(teamKey);
+    const teamData = await client.hGetAll(`${teamKey}$`);
     const players = await client.lRange(`${teamKey}:players`, 0, -1); // Fetch players from Redis list
 
     return {
@@ -120,6 +120,29 @@ class GameRepository {
       describer: teamData.describer || "",
       score: parseInt(teamData.score, 10) || 0,
     };
+  }
+
+  // Get a team by ID
+  async getTeamIds(gameId: string): Promise<string[]> {
+    const client = await redisClient;
+    const teamKey = `${this.redisPrefix}${gameId}:team:*$`;
+    const teamKeys = await client.keys(teamKey);
+
+    return teamKeys.map((key) => key.split(":")?.[3]);
+  }
+
+  // Get a team by ID
+  async getGameIdForTeamId(teamId: string): Promise<string> {
+    const teamKey = `${this.redisPrefix}*:team:${teamId}`;
+
+    return redisClient.then(async (client) => {
+      const res = await client.scan(0, {
+        MATCH: teamKey,
+        COUNT: 1000,
+      });
+      const [, gameId] = res?.keys?.[0]?.split(":") || [];
+      return gameId;
+    });
   }
 
   // Add a player to a team
@@ -134,7 +157,7 @@ class GameRepository {
     // Only add the player if they are not already in the team (check Redis list)
     const playerExists = await client.lPos(`${teamKey}:players`, playerId);
     if (playerExists === null) {
-      await client.lPush(`${teamKey}:players`, playerId); // Add player to the list
+      await client.rPush(`${teamKey}:players`, playerId); // Add player to the list
     }
   }
 
@@ -185,6 +208,19 @@ class GameRepository {
 
     // Remove all players from the Redis list
     await client.del(`${teamKey}:players`);
+  }
+
+  async removeAndReturnFirstPlayer(
+    gameId: string,
+    teamId: string,
+  ): Promise<string | null> {
+    const client = await redisClient;
+    const teamKey = `${this.redisPrefix}${gameId}:team:${teamId}`;
+
+    // Use LPOP to remove and return the first player from the Redis list
+    const playerId = await client.lPop(`${teamKey}:players`);
+
+    return playerId || null; // Return the player ID or null if the list is empty
   }
 }
 

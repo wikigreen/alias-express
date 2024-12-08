@@ -73,6 +73,18 @@ class GameService {
 
     return game;
   }
+
+  async joinTeam(roomId: string, teamId: string, playerId: string) {
+    const gameId = await gameRepository.getGameIdForTeamId(teamId);
+    const teams = await gameRepository.getTeamIds(gameId);
+    for (const tId of teams) {
+      await gameRepository.removePlayerFromTeam(gameId, tId, playerId);
+    }
+    await gameRepository.addPlayerToTeam(gameId, teamId, playerId);
+    this.getFullGameState(gameId).then((state) =>
+        socketio.to(roomId).emit("gameState", state),
+    );
+  }
 }
 
 export const gameService = new GameService();

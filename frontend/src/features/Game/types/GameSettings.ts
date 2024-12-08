@@ -3,3 +3,8 @@ export type GameSettings = {
   roundTime: number;
   roomId: string;
 };
+
+export type JoinTeamRequest = {
+  roomId: string;
+  teamId: string;
+};
