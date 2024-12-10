@@ -1,6 +1,6 @@
 import { AliasGameState, Team } from "./types";
 import { redisClient } from "../redis";
-import { debugMessage, stringifyObjectValues } from "../utils";
+import { stringifyObjectValues } from "../utils";
 
 class GameRepository {
   private readonly redisPrefix = "game:";

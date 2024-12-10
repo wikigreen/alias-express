@@ -36,7 +36,12 @@ export type GameSettings = {
   roundTime: number;
 };
 
-type GameStatus = "waiting" | "ongoing" | "paused" | "completed";
+type GameStatus =
+  | "waiting"
+  | "ongoing"
+  | "paused"
+  | "completed"
+  | "ongoingRound";
 
 interface GameStateProviderProps {
   roomId?: string;

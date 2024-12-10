@@ -92,6 +92,16 @@ class GameService {
     );
   }
 
+  async getTeams(gameId: string): Promise<Team[]> {
+    const teamsId = await gameRepository.getTeamIds(gameId);
+    const teams = [];
+    for (const teamId in teamsId) {
+      const team = await gameRepository.getTeam(gameId, teamId);
+      teams.push(team);
+    }
+    return teams;
+  }
+
   async startGame(roomId?: string, gameId?: string) {
     if (!roomId || !gameId) {
       return;
@@ -104,6 +114,32 @@ class GameService {
     this.getFullGameState(gameId).then((state) =>
       socketio.to(roomId).emit("gameState", state),
     );
+  }
+
+  async startRound(roomId?: string, gameId?: string): Promise<boolean> {
+    if (!roomId || !gameId) {
+      return false;
+    }
+
+    const teams = await this.getTeams(gameId);
+
+    if (teams.length < 2) {
+      return false;
+    }
+
+    const hasEmptyTeam = teams.some((v) => v.players?.length < 1);
+    if (hasEmptyTeam) {
+      return false;
+    }
+
+    await gameRepository.saveGameMetadata(gameId, {
+      gameStatus: "ongoingRound",
+    });
+
+    this.getFullGameState(gameId).then((state) =>
+      socketio.to(roomId).emit("gameState", state),
+    );
+    return true;
   }
 }
 

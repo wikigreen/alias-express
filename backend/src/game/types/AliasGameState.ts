@@ -11,7 +11,12 @@ export type GameSettings = {
   roundTime: number;
 };
 
-type GameStatus = "waiting" | "ongoing" | "paused" | "completed";
+type GameStatus =
+  | "waiting"
+  | "ongoing"
+  | "paused"
+  | "completed"
+  | "ongoingRound";
 
 export type AliasGameState = {
   id: string;
