@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { roomService } from "../room/roomService";
 import { gameService } from "./gameService";
+import { GameStatus } from "./types";
 
 export const gameRouter = Router();
 export const protectedGameRouter = Router();
@@ -37,7 +38,14 @@ protectedGameRouter.post("/start", async (req, res) => {
 //Join team
 gameRouter.post("/team", async (req, res) => {
   const roomId = req.body?.roomId;
+  const gameId = req.body?.gameId;
   const playerId = req.cookies?.[`room:${roomId}`];
+  const gameStatus = await gameService.getGameStatus(gameId);
+  if ("waiting" !== gameStatus) {
+    res.status(409);
+    res.send();
+    return;
+  }
   await gameService.joinTeam(roomId, req.body?.teamId, playerId);
   res.status(204);
   res.send();

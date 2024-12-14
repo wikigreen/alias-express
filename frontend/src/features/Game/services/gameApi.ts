@@ -29,4 +29,8 @@ export const gameApi = createApi({
   }),
 });
 
-export const { useCreateGameMutation, useJoinTeamMutation, useStartGameMutation } = gameApi;
+export const {
+  useCreateGameMutation,
+  useJoinTeamMutation,
+  useStartGameMutation,
+} = gameApi;

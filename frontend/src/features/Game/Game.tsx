@@ -28,9 +28,10 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
     console.log({ data });
   }, [data]);
 
-  const handleJoinTeam = async (teamId: string) => {
+  const handleJoinTeam = async (teamId: string, gameId: string) => {
     const gameSettings: JoinTeamRequest = {
       roomId,
+      gameId,
       teamId,
     };
 
@@ -82,6 +83,9 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
           Current Team: <strong>{data.currentTeam || "None"}</strong>
         </Typography>
         <Typography>
+          Active player <strong>{data.currentPlayer}</strong>
+        </Typography>
+        <Typography>
           Remaining Time: <strong>{data.remainingTime} seconds</strong>
         </Typography>
       </CardContent>
@@ -130,7 +134,9 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
                 )}
               </CardContent>
               <CardActions>
-                <Button onClick={() => handleJoinTeam(team.id)}>Join</Button>
+                <Button onClick={() => handleJoinTeam(team.id, data?.id)}>
+                  Join
+                </Button>
               </CardActions>
             </Card>
           </Grid>

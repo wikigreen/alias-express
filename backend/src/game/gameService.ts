@@ -1,4 +1,4 @@
-import { AliasGameState, GameSettings, Team } from "./types";
+import { AliasGameState, GameSettings, GameStatus, Team } from "./types";
 import { v4 as uuid } from "uuid";
 import { gameRepository } from "./gameRespository";
 import { socketio } from "../index";
@@ -75,7 +75,27 @@ class GameService {
       return null;
     }
 
-    return game;
+    const { teamId: currentTeam, playerId: currentPlayer } =
+      await this.getActivePlayer(game?.gameStatus, gameId);
+
+    return {
+      ...game,
+      currentTeam,
+      currentPlayer,
+    };
+  }
+
+  async getActivePlayer(
+    gameStatus: GameStatus,
+    gameId: string,
+  ): Promise<{ teamId: string | null; playerId: string | null }> {
+    if (new Set<GameStatus>(["waiting", "completed"]).has(gameStatus)) {
+      return { teamId: null, playerId: null };
+    }
+
+    const teamId = await gameRepository.getFirstTeamId(gameId);
+    const playerId = await gameRepository.getFirstPlayerId(gameId, teamId);
+    return { teamId, playerId };
   }
 
   async joinTeam(roomId: string, teamId: string, playerId: string) {
@@ -139,6 +159,10 @@ class GameService {
       socketio.to(roomId).emit("gameState", state),
     );
     return true;
+  }
+
+  async getGameStatus(gameId: string): Promise<GameStatus | null> {
+    return await gameRepository.getGameStatus(gameId);
   }
 }
 

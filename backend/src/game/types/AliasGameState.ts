@@ -1,3 +1,5 @@
+import {Optional} from "../../utils";
+
 export type Team = {
   id: string;
   players: string[];
@@ -11,7 +13,7 @@ export type GameSettings = {
   roundTime: number;
 };
 
-type GameStatus =
+export type GameStatus =
   | "waiting"
   | "ongoing"
   | "paused"
@@ -22,8 +24,9 @@ type GameStatus =
 export type AliasGameState = {
   id: string;
   teams: Team[];
-  currentWord: string | null;
-  currentTeam: string;
+  currentWord: Optional<string>;
+  currentTeam: Optional<string>;
+  currentPlayer: string | null;
   remainingTime: number;
   gameSettings: GameSettings;
   gameStatus: GameStatus;

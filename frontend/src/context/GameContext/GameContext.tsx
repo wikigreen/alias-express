@@ -16,7 +16,8 @@ type AliasGameState = {
   id: string;
   teams: Team[];
   currentWord: string | null;
-  currentTeam: string;
+  currentTeam: string | null;
+  currentPlayer: string | null;
   remainingTime: number;
   gameSettings: GameSettings;
   gameStatus: GameStatus;

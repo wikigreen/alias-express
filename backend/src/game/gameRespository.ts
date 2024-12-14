@@ -1,4 +1,4 @@
-import { AliasGameState, Team } from "./types";
+import { AliasGameState, GameStatus, Team } from "./types";
 import { redisClient } from "../redis";
 import { stringifyObjectValues } from "../utils";
 
@@ -93,21 +93,28 @@ class GameRepository {
       id: gameId,
       teams,
       currentWord: gameData.currentWord || null,
-      currentTeam: gameData.currentTeam || "",
       remainingTime: parseInt(gameData.remainingTime, 10),
       gameSettings: {
         winningScore: parseInt(gameData.winningScore, 10),
         roundTime: parseInt(gameData.roundTime, 10),
       },
-      gameStatus: gameData.gameStatus as
-        | "waiting"
-        | "ongoing"
-        | "paused"
-        | "completed",
+      gameStatus: gameData.gameStatus as GameStatus,
       roundStartedAt: gameData.roundStartedAt
         ? new Date(gameData.roundStartedAt)
         : null,
-    };
+    } as AliasGameState;
+  }
+
+  // Fetch the full game state, including current word, teams, etc.
+  async getGameStatus(gameId: string): Promise<GameStatus | null> {
+    const client = await redisClient;
+
+    return (
+      ((await client.hGet(
+        `${this.redisPrefix}${gameId}`,
+        "gameStatus",
+      )) as GameStatus) || null
+    );
   }
 
   // Get a team by ID
@@ -125,6 +132,24 @@ class GameRepository {
       name: teamData.name || "",
       score: parseInt(teamData.score, 10) || 0,
     };
+  }
+
+  // Get a team by ID
+  async getFirstTeamId(gameId: string): Promise<string> {
+    const client = await redisClient;
+    const teamsKey = `${this.redisPrefix}${gameId}:teams`;
+
+    return (await client.lRange(teamsKey, 0, 0))?.[0];
+  }
+
+  // Get a team by ID
+  async getFirstPlayerId(gameId: string, teamId: string): Promise<string> {
+    const client = await redisClient;
+    const teamKey = `${this.redisPrefix}${gameId}:team:${teamId}`;
+
+    const players = await client.lRange(`${teamKey}:players`, 0, 0); // Fetch players from Redis list
+
+    return players?.[0];
   }
 
   async getTeamIds(gameId: string): Promise<string[]> {
