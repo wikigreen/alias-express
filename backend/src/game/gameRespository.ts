@@ -24,7 +24,7 @@ class GameRepository {
   // Save a specific team in the game
   async saveTeam(gameId: string, team: Team): Promise<void> {
     const client = await redisClient;
-    // Save the team metadata (score and describer)
+    client.rPush(`${this.redisPrefix}${gameId}:teams`, team.id);
     await client.hSet(`${this.redisPrefix}${gameId}:team:${team.id}$`, {
       describer: team.describer,
       score: team.score.toString(),
@@ -77,7 +77,11 @@ class GameRepository {
     }
 
     // Fetch all teams for the game
-    const teamKeys = await client.keys(`${this.redisPrefix}${gameId}:team:*$`);
+    const teamKeys = await client.lRange(
+      `${this.redisPrefix}${gameId}:teams`,
+      0,
+      -1,
+    );
     const teams: Team[] = await Promise.all(
       teamKeys.map(async (key) => {
         const teamId = key.split(":").pop()?.replace("$", ""); // Extract teamId from key
@@ -123,13 +127,9 @@ class GameRepository {
     };
   }
 
-  // Get a team by ID
   async getTeamIds(gameId: string): Promise<string[]> {
     const client = await redisClient;
-    const teamKey = `${this.redisPrefix}${gameId}:team:*$`;
-    const teamKeys = await client.keys(teamKey);
-
-    return teamKeys.map((key) => key.split(":")?.[3]?.replace("$", ""));
+    return await client.lRange(`${this.redisPrefix}${gameId}:teams`, 0, -1);
   }
 
   // Get a team by ID
