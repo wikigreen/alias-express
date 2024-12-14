@@ -13,7 +13,6 @@ class GameService {
   }: GameSettings & { roomId: string }): Promise<string> {
     const gameId = uuid(); // Generate a unique game ID
 
-    // Initialize the game state (no players yet, empty teams)
     const gameState: Partial<AliasGameState> = {
       currentWord: null,
       remainingTime: gameSettings.roundTime,
