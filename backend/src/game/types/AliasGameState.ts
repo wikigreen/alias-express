@@ -16,7 +16,8 @@ type GameStatus =
   | "ongoing"
   | "paused"
   | "completed"
-  | "ongoingRound";
+  | "ongoingRound"
+  | "lastWord";
 
 export type AliasGameState = {
   id: string;

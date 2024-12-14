@@ -41,7 +41,8 @@ type GameStatus =
   | "ongoing"
   | "paused"
   | "completed"
-  | "ongoingRound";
+  | "ongoingRound"
+  | "lastWord";
 
 interface GameStateProviderProps {
   roomId?: string;
