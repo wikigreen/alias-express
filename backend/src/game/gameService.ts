@@ -1,9 +1,9 @@
-import { AliasGameState, GameSettings, Team } from "./types";
+import { AliasGameState, GameSettings, GameStatus, Team } from "./types";
 import { v4 as uuid } from "uuid";
 import { gameRepository } from "./gameRespository";
 import { socketio } from "../index";
-import { debugMessage, Optional } from "../utils";
 import { roomService } from "../room/roomService";
+import { Optional } from "../utils";
 
 class GameService {
   // Create a new game with a unique gameId and copy words from the global list
@@ -13,7 +13,6 @@ class GameService {
   }: GameSettings & { roomId: string }): Promise<string> {
     const gameId = uuid(); // Generate a unique game ID
 
-    // Initialize the game state (no players yet, empty teams)
     const gameState: Partial<AliasGameState> = {
       currentWord: null,
       remainingTime: gameSettings.roundTime,
@@ -29,17 +28,16 @@ class GameService {
     // Copy words from the global 'simpleWords' list to the game's word list
     const words = await gameRepository.getSimpleWords();
     await gameRepository.copyWordsToGame(gameId, words);
-    await this.addTeamToGame(gameId, { name: "Team A" });
-    await this.addTeamToGame(gameId, { name: "Team B" });
+    await this.addTeamToGame(roomId, gameId, { name: "Team A" });
+    await this.addTeamToGame(roomId, gameId, { name: "Team B" });
 
-    this.getFullGameState(gameId).then((state) =>
-      socketio.to(roomId).emit("gameState", state),
-    );
+    await this.#emitGameState(roomId, gameId);
 
     return gameId; // Return the unique game ID
   }
 
   async addTeamToGame(
+    roomId: string,
     gameId: string,
     teamSettings: Partial<Team> = {},
   ): Promise<void> {
@@ -55,9 +53,7 @@ class GameService {
     };
 
     await gameRepository.saveTeam(gameId, team);
-    this.getFullGameState(gameId).then((state) =>
-      socketio.to(gameId).emit("gameState", state),
-    );
+    await this.#emitGameState(roomId, gameId);
   }
 
   async popNextWord(gameId: string): Promise<string | null> {
@@ -76,7 +72,30 @@ class GameService {
       return null;
     }
 
-    return game;
+    const { teamId: currentTeam, playerId: currentPlayer } =
+      await this.getActivePlayer(gameId);
+
+    return {
+      ...game,
+      currentTeam,
+      currentPlayer,
+    };
+  }
+
+  async getActivePlayer(
+    gameId: string,
+  ): Promise<{ teamId: string | null; playerId: string | null }> {
+    const gameStatus = await this.getGameStatus(gameId);
+    if (
+      gameStatus &&
+      new Set<GameStatus>(["waiting", "completed"]).has(gameStatus)
+    ) {
+      return { teamId: null, playerId: null };
+    }
+
+    const teamId = await gameRepository.getFirstTeamId(gameId);
+    const playerId = await gameRepository.getFirstPlayerId(gameId, teamId);
+    return { teamId, playerId };
   }
 
   async joinTeam(roomId: string, teamId: string, playerId: string) {
@@ -87,13 +106,26 @@ class GameService {
     }
     await gameRepository.addPlayerToTeam(gameId, teamId, playerId);
 
-    this.getFullGameState(gameId).then((state) =>
-      socketio.to(roomId).emit("gameState", state),
-    );
+    await this.#emitGameState(roomId, gameId);
   }
 
-  async startGame(roomId?: string, gameId?: string) {
+  async getTeams(gameId: string): Promise<Team[]> {
+    const teamsId = await gameRepository.getTeamIds(gameId);
+    const teams = [];
+    for (const teamId of teamsId) {
+      const team = await gameRepository.getTeam(gameId, teamId);
+      teams.push(team);
+    }
+    return teams;
+  }
+
+  async startGame(roomId: string, gameId: string) {
     if (!roomId || !gameId) {
+      return;
+    }
+
+    const gameStatus = await this.getGameStatus(gameId);
+    if (gameStatus !== "waiting") {
       return;
     }
 
@@ -101,9 +133,82 @@ class GameService {
       gameStatus: "ongoing",
     });
 
-    this.getFullGameState(gameId).then((state) =>
-      socketio.to(roomId).emit("gameState", state),
-    );
+    await this.#emitGameState(roomId, gameId);
+  }
+
+  async startRound(
+    roomId: string,
+    gameId: string,
+    playerId: string,
+  ): Promise<boolean> {
+    if (!roomId || !gameId) {
+      return false;
+    }
+    const gameStatus = await this.getGameStatus(gameId);
+
+    const { playerId: activePlayerId } = await this.getActivePlayer(gameId);
+
+    if (playerId !== activePlayerId) {
+      return false;
+    }
+
+    if (gameStatus === "ongoingRound") {
+      return true;
+    }
+
+    const teams = await this.getTeams(gameId);
+
+    if (teams.length < 2) {
+      return false;
+    }
+
+    const hasEmptyTeam = teams.some((v) => v.players?.length < 1);
+    if (hasEmptyTeam) {
+      return false;
+    }
+
+    await gameRepository.saveGameMetadata(gameId, {
+      gameStatus: "ongoingRound",
+    });
+
+    this.#emitGameState(roomId, gameId).then((state) => {
+      setTimeout(
+        () => this.#endRound(roomId, gameId),
+        (state?.gameSettings?.roundTime || 60) * 1000,
+      );
+    });
+    return true;
+  }
+
+  async #endRound(roomId: string, gameId: string): Promise<void> {
+    await gameRepository.saveGameMetadata(gameId, {
+      gameStatus: "lastWord",
+    });
+    await this.#emitGameState(roomId, gameId);
+  }
+
+  async getGameStatus(gameId: string): Promise<GameStatus | null> {
+    return await gameRepository.getGameStatus(gameId);
+  }
+
+  async #emitGameState(
+    roomId: string,
+    gameId: string,
+  ): Promise<AliasGameState | null> {
+    return this.getFullGameState(gameId).then((state) => {
+      socketio.to(roomId).emit("gameState", state);
+      roomService.getPlayers(roomId, false).then((players) => {
+        players
+          .map((p) => p.id)
+          .forEach((pId) => {
+            if (!pId) return;
+            socketio
+              .to(pId)
+              .emit("isActivePlayer", state?.currentPlayer === pId);
+          });
+      });
+      return state;
+    });
   }
 }
 

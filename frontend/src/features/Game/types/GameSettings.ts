@@ -6,5 +6,6 @@ export type GameSettings = {
 
 export type JoinTeamRequest = {
   roomId: string;
+  gameId: string;
   teamId: string;
 };
