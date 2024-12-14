@@ -76,9 +76,15 @@ const disconnectPlayer = async (
   });
 };
 
-const getPlayers = async (roomId: Room["id"]): Promise<Partial<Player>[]> => {
+const getPlayers = async (
+  roomId: Room["id"],
+  hideIds = true,
+): Promise<Partial<Player>[]> => {
   const players = await roomRepository.getPlayers(roomId);
-  return players.map((p) => ({ ...p, id: undefined }));
+  return players.map((p) => ({
+    ...p,
+    ...(hideIds ? { id: undefined } : {}),
+  }));
 };
 
 const getPlayer = async (

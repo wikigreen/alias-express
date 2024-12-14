@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { roomService } from "../room/roomService";
 import { gameService } from "./gameService";
-import { GameStatus } from "./types";
 
 export const gameRouter = Router();
 export const protectedGameRouter = Router();
@@ -22,7 +21,10 @@ protectedGameRouter.use(async (req, res, next) => {
 
 //Create game
 protectedGameRouter.post("/", async (req, res) => {
-  const room = await gameService.createGame(req.body);
+  const room = await gameService.createGame({
+    ...req.body,
+    playerId: req.cookies?.[`room:${req.body?.roomId}`],
+  });
   res.send(room);
 });
 
@@ -30,7 +32,7 @@ protectedGameRouter.post("/", async (req, res) => {
 protectedGameRouter.post("/start", async (req, res) => {
   const { id: roomId, currentGameId: gameId } =
     (await roomService.getRoom(req.body?.roomId)) || {};
-  await gameService.startGame(roomId, gameId as string);
+  await gameService.startGame(roomId!, gameId!);
   res.status(204);
   res.send();
 });
@@ -47,6 +49,23 @@ gameRouter.post("/team", async (req, res) => {
     return;
   }
   await gameService.joinTeam(roomId, req.body?.teamId, playerId);
+  res.status(204);
+  res.send();
+});
+
+//Start round
+gameRouter.patch("/round", async (req, res) => {
+  const roomId = req.body?.roomId;
+  const gameId = req.body?.gameId;
+  const playerId = req.cookies?.[`room:${roomId}`];
+  const isStarted = await gameService.startRound(roomId, gameId, playerId);
+  if (!isStarted) {
+    res.status(409);
+    res.send(
+      "You dont have permission to start a round or current state of game does not allow to start the round",
+    );
+    return;
+  }
   res.status(204);
   res.send();
 });

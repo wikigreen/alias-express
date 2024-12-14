@@ -49,6 +49,10 @@ export const initSocketIo = (server: ReturnType<typeof createServer>) => {
 
       if (state) {
         socketio.to(roomId).to(playerId).emit("gameState", state);
+        socketio
+          .to(roomId)
+          .to(playerId)
+          .emit("isActivePlayer", state?.currentPlayer === playerId);
       }
     });
 

@@ -11,7 +11,11 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import { useJoinTeamMutation, useStartGameMutation } from "./services";
+import {
+  useJoinTeamMutation,
+  useStartGameMutation,
+  useStartRoundMutation,
+} from "./services";
 import { JoinTeamRequest } from "./types";
 
 interface GameFormProps {
@@ -20,9 +24,10 @@ interface GameFormProps {
 }
 
 const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
-  const { gameState } = useGameState();
+  const { gameState, isActivePlayer } = useGameState();
   const [joinTeam] = useJoinTeamMutation();
   const [startGame] = useStartGameMutation();
+  const [startRound] = useStartRoundMutation();
 
   useEffect(() => {
     console.log({ data: gameState });
@@ -55,6 +60,19 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
     }
   };
 
+  const handleStartRound = async (gameId: string) => {
+    const req = {
+      roomId,
+      gameId,
+    };
+
+    try {
+      await startRound(req);
+    } catch (error) {
+      console.error("Failed to start round:", gameId, error);
+    }
+  };
+
   if (!gameState) {
     return <GameForm isAdmin={isAdmin} roomId={roomId} />;
   }
@@ -65,6 +83,12 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         Game
       </Typography>
       <Button onClick={() => handleStartGame(gameState?.id)}>Start game</Button>
+      <Button
+        disabled={!isActivePlayer}
+        onClick={() => handleStartRound(gameState?.id)}
+      >
+        Start round
+      </Button>
       <Divider sx={{ marginBottom: 2 }} />
 
       {/* Game Status Section */}
@@ -80,10 +104,12 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
           Current Word: <strong>{gameState.currentWord || "None"}</strong>
         </Typography>
         <Typography>
-          Current Team: <strong>{gameState.currentTeam || "None"}</strong>
+          Current Active Team:
+          <strong>{gameState.currentTeam || "None"}</strong>
         </Typography>
         <Typography>
-          Active player <strong>{gameState.currentPlayer}</strong>
+          Is current player active:{" "}
+          <strong>{isActivePlayer ? "Active" : "Not active"}</strong>
         </Typography>
         <Typography>
           Remaining Time: <strong>{gameState.remainingTime} seconds</strong>

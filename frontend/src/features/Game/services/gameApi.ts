@@ -26,6 +26,13 @@ export const gameApi = createApi({
         body,
       }),
     }),
+    startRound: builder.mutation<void, { roomId: string; gameId: string }>({
+      query: (body) => ({
+        url: "round",
+        method: "PATCH",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -33,4 +40,5 @@ export const {
   useCreateGameMutation,
   useJoinTeamMutation,
   useStartGameMutation,
+  useStartRoundMutation,
 } = gameApi;

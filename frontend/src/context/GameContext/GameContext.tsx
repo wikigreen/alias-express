@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState, PropsWithChildren } from "react";
+import { createContext, PropsWithChildren, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { Player } from "./types";
 
@@ -6,6 +6,7 @@ interface GameStateContextType {
   socket: Socket | null;
   players: Player[];
   gameState: AliasGameState | null;
+  isActivePlayer: boolean;
 }
 
 export const GameStateContext = createContext<GameStateContextType>(
@@ -22,6 +23,7 @@ type AliasGameState = {
   gameSettings: GameSettings;
   gameStatus: GameStatus;
   roundStartedAt: Date | null;
+  isActivePlayer: boolean;
 };
 
 export type Team = {
@@ -56,6 +58,7 @@ export const GameStateProvider = ({
 }: PropsWithChildren<GameStateProviderProps>) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [isActivePlayer, setIsActivePlayer] = useState<boolean>(false);
   const [gameState, setGameState] = useState<AliasGameState | null>(null);
 
   useEffect(() => {
@@ -67,6 +70,10 @@ export const GameStateProvider = ({
 
       newSocket.on("playerConnect", (updatedState: Player[]) => {
         setPlayers(updatedState);
+      });
+
+      newSocket.on("isActivePlayer", (isActivePlayer: boolean) => {
+        setIsActivePlayer(isActivePlayer);
       });
 
       newSocket.on("gameState", (updatedState: AliasGameState) => {
@@ -86,7 +93,9 @@ export const GameStateProvider = ({
   }, [socket]);
 
   return (
-    <GameStateContext.Provider value={{ socket, players, gameState }}>
+    <GameStateContext.Provider
+      value={{ socket, players, gameState, isActivePlayer }}
+    >
       {children}
     </GameStateContext.Provider>
   );

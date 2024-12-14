@@ -1,4 +1,4 @@
-import {Optional} from "../../utils";
+import { Optional } from "../../utils";
 
 export type Team = {
   id: string;
@@ -31,4 +31,5 @@ export type AliasGameState = {
   gameSettings: GameSettings;
   gameStatus: GameStatus;
   roundStartedAt: Date | null;
+  isActivePlayer: boolean;
 };
