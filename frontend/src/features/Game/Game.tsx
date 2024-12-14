@@ -82,7 +82,12 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
       <Typography variant="h4" gutterBottom>
         Game
       </Typography>
-      <Button onClick={() => handleStartGame(gameState?.id)}>Start game</Button>
+      <Button
+        disabled={!isAdmin}
+        onClick={() => handleStartGame(gameState?.id)}
+      >
+        Start game
+      </Button>
       <Button
         disabled={!isActivePlayer}
         onClick={() => handleStartRound(gameState?.id)}
