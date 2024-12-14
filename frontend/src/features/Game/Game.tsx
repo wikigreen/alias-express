@@ -20,13 +20,13 @@ interface GameFormProps {
 }
 
 const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
-  const { gameState: data } = useGameState();
+  const { gameState } = useGameState();
   const [joinTeam] = useJoinTeamMutation();
   const [startGame] = useStartGameMutation();
 
   useEffect(() => {
-    console.log({ data });
-  }, [data]);
+    console.log({ data: gameState });
+  }, [gameState]);
 
   const handleJoinTeam = async (teamId: string, gameId: string) => {
     const gameSettings: JoinTeamRequest = {
@@ -55,7 +55,7 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
     }
   };
 
-  if (!data) {
+  if (!gameState) {
     return <GameForm isAdmin={isAdmin} roomId={roomId} />;
   }
 
@@ -64,29 +64,29 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
       <Typography variant="h4" gutterBottom>
         Game
       </Typography>
-      <Button onClick={() => handleStartGame(data?.id)}>Start game</Button>
+      <Button onClick={() => handleStartGame(gameState?.id)}>Start game</Button>
       <Divider sx={{ marginBottom: 2 }} />
 
       {/* Game Status Section */}
       <CardContent>
         <Typography variant="h6">Game Status</Typography>
         <Typography>
-          ID: <strong>{data.id}</strong>
+          ID: <strong>{gameState.id}</strong>
         </Typography>
         <Typography>
-          Status: <strong>{data.gameStatus}</strong>
+          Status: <strong>{gameState.gameStatus}</strong>
         </Typography>
         <Typography>
-          Current Word: <strong>{data.currentWord || "None"}</strong>
+          Current Word: <strong>{gameState.currentWord || "None"}</strong>
         </Typography>
         <Typography>
-          Current Team: <strong>{data.currentTeam || "None"}</strong>
+          Current Team: <strong>{gameState.currentTeam || "None"}</strong>
         </Typography>
         <Typography>
-          Active player <strong>{data.currentPlayer}</strong>
+          Active player <strong>{gameState.currentPlayer}</strong>
         </Typography>
         <Typography>
-          Remaining Time: <strong>{data.remainingTime} seconds</strong>
+          Remaining Time: <strong>{gameState.remainingTime} seconds</strong>
         </Typography>
       </CardContent>
 
@@ -96,11 +96,11 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
           <Typography variant="h6">Game Settings</Typography>
           <Typography>
             Winning Score:{" "}
-            <strong>{data.gameSettings.winningScore || "Not Set"}</strong>
+            <strong>{gameState.gameSettings.winningScore || "Not Set"}</strong>
           </Typography>
           <Typography>
             Round Time:{" "}
-            <strong>{data.gameSettings.roundTime || "Not Set"}</strong>
+            <strong>{gameState.gameSettings.roundTime || "Not Set"}</strong>
           </Typography>
         </CardContent>
       </Card>
@@ -110,7 +110,7 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         Teams
       </Typography>
       <Grid container spacing={2}>
-        {data.teams.map((team) => (
+        {gameState.teams.map((team) => (
           <Grid item xs={12} sm={6} key={team.id}>
             <Card>
               <CardContent>
@@ -134,7 +134,7 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
                 )}
               </CardContent>
               <CardActions>
-                <Button onClick={() => handleJoinTeam(team.id, data?.id)}>
+                <Button onClick={() => handleJoinTeam(team.id, gameState?.id)}>
                   Join
                 </Button>
               </CardActions>
