@@ -2,7 +2,7 @@ import { AliasGameState, GameSettings, Team } from "./types";
 import { v4 as uuid } from "uuid";
 import { gameRepository } from "./gameRespository";
 import { socketio } from "../index";
-import { debugMessage, Optional } from "../utils";
+import { Optional } from "../utils";
 import { roomService } from "../room/roomService";
 
 class GameService {
