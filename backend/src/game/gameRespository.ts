@@ -56,13 +56,6 @@ class GameRepository {
     // Pop a word from the word list
     const nextWord = await client.lPop(gameWordsKey);
 
-    if (nextWord) {
-      // Update currentWord in game metadata
-      await client.hSet(`${this.redisPrefix}${gameId}`, {
-        currentWord: nextWord,
-      });
-    }
-
     return nextWord || null; // Return the next word or null if the list is empty
   }
 
@@ -92,16 +85,12 @@ class GameRepository {
     return {
       id: gameId,
       teams,
-      currentWord: gameData.currentWord || null,
-      remainingTime: parseInt(gameData.remainingTime, 10),
       gameSettings: {
         winningScore: parseInt(gameData.winningScore, 10),
         roundTime: parseInt(gameData.roundTime, 10),
       },
       gameStatus: gameData.gameStatus as GameStatus,
-      roundStartedAt: gameData.roundStartedAt
-        ? new Date(gameData.roundStartedAt)
-        : null,
+      currentRound: parseInt(gameData.currentRound, 10),
     } as AliasGameState;
   }
 

@@ -14,11 +14,9 @@ class GameService {
     const gameId = uuid(); // Generate a unique game ID
 
     const gameState: Partial<AliasGameState> = {
-      currentWord: null,
-      remainingTime: gameSettings.roundTime,
       gameSettings,
       gameStatus: "waiting",
-      roundStartedAt: null,
+      currentRound: 1,
     };
 
     // Save game metadata (excluding teams)
