@@ -48,9 +48,8 @@ export const initSocketIo = (server: ReturnType<typeof createServer>) => {
       const state = await gameService.getFullGameState(currentGameId);
 
       if (state) {
-        socketio.to(roomId).to(playerId).emit("gameState", state);
+        socketio.to(playerId).emit("gameState", state);
         socketio
-          .to(roomId)
           .to(playerId)
           .emit("isActivePlayer", state?.currentPlayer === playerId);
       }

@@ -2,8 +2,8 @@ import { AliasGameState, GameSettings, GameStatus, Team } from "./types";
 import { v4 as uuid } from "uuid";
 import { gameRepository } from "./gameRespository";
 import { socketio } from "../index";
-import { Optional } from "../utils";
 import { roomService } from "../room/roomService";
+import { Optional } from "../utils";
 
 class GameService {
   // Create a new game with a unique gameId and copy words from the global list
@@ -124,6 +124,11 @@ class GameService {
       return;
     }
 
+    const gameStatus = await this.getGameStatus(gameId);
+    if (gameStatus !== "waiting") {
+      return;
+    }
+
     await gameRepository.saveGameMetadata(gameId, {
       gameStatus: "ongoing",
     });
@@ -198,7 +203,6 @@ class GameService {
           .forEach((pId) => {
             if (!pId) return;
             socketio
-              .to(roomId)
               .to(pId)
               .emit("isActivePlayer", state?.currentPlayer === pId);
           });
