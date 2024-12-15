@@ -178,6 +178,34 @@ class GameService {
     return true;
   }
 
+  async finishRound(
+    roomId: string,
+    gameId: string,
+    playerId: string,
+  ): Promise<boolean> {
+    if (!roomId || !gameId) {
+      return false;
+    }
+    const gameStatus = await this.getGameStatus(gameId);
+
+    const { playerId: activePlayerId } = await this.getActivePlayer(gameId);
+
+    if (playerId !== activePlayerId) {
+      return false;
+    }
+
+    if (gameStatus === "ongoing") {
+      return true;
+    }
+
+    await gameRepository.saveGameMetadata(gameId, {
+      gameStatus: "ongoing",
+    });
+
+    await this.#emitGameState(roomId, gameId);
+    return true;
+  }
+
   async #endRound(roomId: string, gameId: string): Promise<void> {
     await gameRepository.saveGameMetadata(gameId, {
       gameStatus: "lastWord",

@@ -33,6 +33,13 @@ export const gameApi = createApi({
         body,
       }),
     }),
+    finishRound: builder.mutation<void, { roomId: string; gameId: string }>({
+      query: (body) => ({
+        url: "round/stop",
+        method: "PATCH",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -41,4 +48,5 @@ export const {
   useJoinTeamMutation,
   useStartGameMutation,
   useStartRoundMutation,
+  useFinishRoundMutation,
 } = gameApi;
