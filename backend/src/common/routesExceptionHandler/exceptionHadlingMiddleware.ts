@@ -29,5 +29,5 @@ function getErrorMetadata(
     case NotFoundError:
       return [status("NotFound"), error.message];
   }
-  return [status("InternalServerError"), "Server error"];
+  return [500, "Server error"];
 }
