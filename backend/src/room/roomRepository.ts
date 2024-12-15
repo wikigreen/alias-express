@@ -1,23 +1,30 @@
 import { redisClient } from "../redis";
-import { GameStatus, Player, Room } from "./types";
+import { Player, Room } from "./types";
 import { randomUUID } from "node:crypto";
-import { Optional, stringifyObjectValues } from "../utils";
+import {
+  debugMessage,
+  Optional,
+  parseObjectValues,
+  stringifyObjectValues,
+} from "../utils";
 
 const createRoom = async (room: Omit<Room, "id">): Promise<Room> => {
   const roomId = randomUUID();
   const roomKey = getRoomKey(roomId);
   await redisClient.then((client) =>
-    client.hSet(roomKey, {
-      status: room.status,
-    }),
+    client.hSet(
+      roomKey,
+      stringifyObjectValues({
+        status: room.status,
+      }),
+    ),
   );
-  const roomResult: Room = {
+  debugMessage("here");
+  return {
     id: roomId,
     status: room.status,
     currentGameId: null,
   };
-
-  return roomResult;
 };
 
 const updateRoom = async ({
@@ -38,35 +45,32 @@ const getRoom = async (roomId: string): Promise<Optional<Room>> => {
     return null;
   }
 
-  const room: Room = {
+  return {
+    ...(parseObjectValues(roomData) as Room),
     id: roomId,
-    status: roomData.status as GameStatus,
-    currentGameId: roomData.currentGameId as GameStatus,
   };
-
-  return room;
 };
 
 const addPlayer = async (roomId: string, player: Player): Promise<Player> => {
   const playerId = randomUUID();
   const playerKey = getRoomPlayerKey(roomId, playerId);
   await redisClient.then((client) =>
-    client.hSet(playerKey, {
-      roomId,
-      nickname: player.nickname || "",
-      online: +player.online,
-    }),
+    client.hSet(
+      playerKey,
+      stringifyObjectValues({
+        ...player,
+        roomId,
+      }),
+    ),
   );
 
-  const resPlayer: Player = {
+  return {
     id: playerId,
     roomId,
     online: player.online,
     nickname: player.nickname,
     isAdmin: false,
   };
-
-  return resPlayer;
 };
 
 const removePlayer = async (
@@ -82,14 +86,7 @@ const updatePlayer = async (
 ): Promise<Partial<Player>> => {
   const playerKey = getRoomPlayerKey(player.roomId, player.id);
   await redisClient.then((client) => {
-    const result = {
-      ...(player.roomId ? { roomId: player.roomId } : {}),
-      ...(player.nickname ? { nickname: player.nickname } : {}),
-      ...(player.online != null ? { online: +player.online } : {}),
-      ...(player.isAdmin != null ? { isAdmin: +player.isAdmin } : {}),
-    };
-
-    client.hSet(playerKey, result);
+    client.hSet(playerKey, stringifyObjectValues(player));
   });
 
   const resPlayer: Partial<Player> = {
@@ -127,12 +124,10 @@ const getPlayer = async (
     client.hGetAll(getRoomPlayerKey(roomId, playerId)),
   );
   return {
+    ...(parseObjectValues(player) as Player),
     id: playerId,
     roomId,
-    nickname: player.nickname,
-    online: !!+player.online,
-    isAdmin: !!+player.isAdmin,
-  } as Player;
+  };
 };
 
 const existsByNickname = async (

@@ -1,6 +1,6 @@
 import { AliasGameState, GameStatus, Team } from "./types";
 import { redisClient } from "../redis";
-import { stringifyObjectValues } from "../utils";
+import { parseObjectValues, stringifyObjectValues } from "../utils";
 
 class GameRepository {
   private readonly redisPrefix = "game:";
@@ -14,10 +14,7 @@ class GameRepository {
 
     await client.hSet(
       `${this.redisPrefix}${gameId}`,
-      stringifyObjectValues({
-        ...gameData,
-        ...gameData?.gameSettings,
-      }),
+      stringifyObjectValues(gameData),
     );
   }
 
@@ -25,11 +22,10 @@ class GameRepository {
   async saveTeam(gameId: string, team: Team): Promise<void> {
     const client = await redisClient;
     client.rPush(`${this.redisPrefix}${gameId}:teams`, team.id);
-    await client.hSet(`${this.redisPrefix}${gameId}:team:${team.id}$`, {
-      describer: team.describer,
-      score: team.score.toString(),
-      name: team.name,
-    });
+    await client.hSet(
+      `${this.redisPrefix}${gameId}:team:${team.id}$`,
+      stringifyObjectValues(team),
+    );
   }
 
   // Fetch the list of words from the 'simpleWords' key
@@ -83,27 +79,22 @@ class GameRepository {
     );
 
     return {
+      ...(parseObjectValues(gameData) as AliasGameState),
       id: gameId,
       teams,
-      gameSettings: {
-        winningScore: parseInt(gameData.winningScore, 10),
-        roundTime: parseInt(gameData.roundTime, 10),
-      },
-      gameStatus: gameData.gameStatus as GameStatus,
-      currentRound: parseInt(gameData.currentRound, 10),
-    } as AliasGameState;
+    };
   }
 
   // Fetch the full game state, including current word, teams, etc.
   async getGameStatus(gameId: string): Promise<GameStatus | null> {
     const client = await redisClient;
 
-    return (
-      ((await client.hGet(
-        `${this.redisPrefix}${gameId}`,
-        "gameStatus",
-      )) as GameStatus) || null
+    const gameStatusJson = await client.hGet(
+      `${this.redisPrefix}${gameId}`,
+      "gameStatus",
     );
+
+    return (JSON.parse(gameStatusJson!) as GameStatus) || null;
   }
 
   // Get a team by ID
@@ -115,11 +106,9 @@ class GameRepository {
     const players = await client.lRange(`${teamKey}:players`, 0, -1); // Fetch players from Redis list
 
     return {
+      ...(parseObjectValues(teamData) as Team),
       id: teamId,
       players,
-      describer: teamData.describer || "",
-      name: teamData.name || "",
-      score: parseInt(teamData.score, 10) || 0,
     };
   }
 

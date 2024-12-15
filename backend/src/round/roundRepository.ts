@@ -1,5 +1,6 @@
 import { redisClient } from "../redis";
 import { RoundInfo } from "./types";
+import { parseObjectValues, stringifyObjectValues } from "../utils";
 
 class RoundRepository {
   private readonly redisPrefix = "round:";
@@ -154,21 +155,6 @@ class RoundRepository {
     );
     return exists > 0;
   }
-}
-
-// Helper functions to serialize/deserialize objects
-function stringifyObjectValues<T extends object>(
-  obj: T,
-): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(obj).map(([key, value]) => [key, JSON.stringify(value)]),
-  );
-}
-
-function parseObjectValues(obj: Record<string, string>) {
-  return Object.fromEntries(
-    Object.entries(obj).map(([key, value]) => [key, JSON.parse(value)]),
-  );
 }
 
 export const roundRepository = new RoundRepository();
