@@ -6,7 +6,7 @@ function logMessageHelper(
   logFn: (...args: unknown[]) => void,
 ) {
   const error = new Error();
-  const [, , callerFunctionCall] = error?.stack?.split("\n") || [];
+  const [, , , callerFunctionCall] = error?.stack?.split("\n") || [];
 
   logFn(
     `[${type}] ${message
