@@ -1,6 +1,7 @@
 import { AliasGameState, GameStatus, Team } from "./types";
 import { redisClient } from "../redis";
 import { parseObjectValues, stringifyObjectValues } from "../utils";
+import { roundRepository } from "../round";
 
 class GameRepository {
   private readonly redisPrefix = "game:";
@@ -226,6 +227,19 @@ class GameRepository {
     const playerId = await client.lPop(`${teamKey}:players`);
 
     return playerId || null; // Return the player ID or null if the list is empty
+  }
+
+  async startRound(gameId: string, teamId: string) {
+    const currentRound = await this.getCurrentRound(gameId);
+    await roundRepository.saveRound(`${currentRound || 1}`, teamId, gameId);
+  }
+
+  async getCurrentRound(gameId: string): Promise<number | null> {
+    const roundIds = await roundRepository.getAllRoundIdsForGame(gameId);
+    if (roundIds?.length < 1) {
+      return null;
+    }
+    return Math.max(...roundIds);
   }
 }
 
