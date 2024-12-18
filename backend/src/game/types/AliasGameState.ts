@@ -24,12 +24,10 @@ export type GameStatus =
 export type AliasGameState = {
   id: string;
   teams: Team[];
-  currentWord: Optional<string>;
   currentTeam: Optional<string>;
   currentPlayer: string | null;
-  remainingTime: number;
   gameSettings: GameSettings;
   gameStatus: GameStatus;
-  roundStartedAt: Date | null;
+  currentRound: number;
   isActivePlayer: boolean;
 };

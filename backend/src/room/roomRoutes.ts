@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { roomService } from "./roomService";
+import { logErrorMessage } from "../utils";
 
 export const roomRouter = Router();
 export const protectedRoomRouter = Router();
@@ -32,6 +33,7 @@ roomRouter.get("/:roomId", async (req, res, next) => {
     const isAdmin = await roomService.isAdmin(req.params.roomId, playerId);
     res.send({ ...room, playerId, isAdmin });
   } catch (err) {
+    logErrorMessage(err?.toString() || "");
     next(err);
   }
 });

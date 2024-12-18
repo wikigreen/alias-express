@@ -69,3 +69,20 @@ gameRouter.patch("/round", async (req, res) => {
   res.status(204);
   res.send();
 });
+
+//Start round
+gameRouter.patch("/round/stop", async (req, res) => {
+  const roomId = req.body?.roomId;
+  const gameId = req.body?.gameId;
+  const playerId = req.cookies?.[`room:${roomId}`];
+  const isFinished = await gameService.finishRound(roomId, gameId, playerId);
+  if (!isFinished) {
+    res.status(409);
+    res.send(
+      "You dont have permission to start a round or current state of game does not allow to start the round",
+    );
+    return;
+  }
+  res.status(204);
+  res.send();
+});

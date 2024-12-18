@@ -4,6 +4,7 @@ import { gameRepository } from "./gameRespository";
 import { socketio } from "../index";
 import { roomService } from "../room/roomService";
 import { Optional } from "../utils";
+import { roundRepository } from "../round";
 
 class GameService {
   // Create a new game with a unique gameId and copy words from the global list
@@ -14,11 +15,9 @@ class GameService {
     const gameId = uuid(); // Generate a unique game ID
 
     const gameState: Partial<AliasGameState> = {
-      currentWord: null,
-      remainingTime: gameSettings.roundTime,
       gameSettings,
       gameStatus: "waiting",
-      roundStartedAt: null,
+      currentRound: 1,
     };
 
     // Save game metadata (excluding teams)
@@ -74,11 +73,13 @@ class GameService {
 
     const { teamId: currentTeam, playerId: currentPlayer } =
       await this.getActivePlayer(gameId);
+    const currentRound = await roundRepository.getRoundNumber(gameId);
 
     return {
       ...game,
       currentTeam,
       currentPlayer,
+      currentRound,
     };
   }
 
@@ -129,6 +130,7 @@ class GameService {
       return;
     }
 
+    await roundRepository.setRoundNumber(gameId, 1);
     await gameRepository.saveGameMetadata(gameId, {
       gameStatus: "ongoing",
     });
@@ -173,14 +175,68 @@ class GameService {
 
     this.#emitGameState(roomId, gameId).then((state) => {
       setTimeout(
-        () => this.#endRound(roomId, gameId),
+        () => this.#endGuessingTime(roomId, gameId),
         (state?.gameSettings?.roundTime || 60) * 1000,
       );
     });
     return true;
   }
 
-  async #endRound(roomId: string, gameId: string): Promise<void> {
+  async finishRound(
+    roomId: string,
+    gameId: string,
+    playerId: string,
+  ): Promise<boolean> {
+    if (!roomId || !gameId) {
+      return false;
+    }
+    const gameStatus = await this.getGameStatus(gameId);
+
+    const { playerId: activePlayerId, teamId: activeTeamId } =
+      await this.getActivePlayer(gameId);
+
+    if (playerId !== activePlayerId) {
+      return false;
+    }
+
+    if (gameStatus === "ongoing") {
+      return true;
+    }
+
+    await gameRepository.saveGameMetadata(gameId, {
+      gameStatus: "ongoing",
+    });
+
+    const nextPlayerToGuess = await this.nextPlayerToGuess(
+      gameId,
+      activeTeamId!,
+    );
+    await roundRepository.addPlayerToRoundFinishers(
+      activeTeamId!,
+      activePlayerId,
+    );
+    const nextPlayerInRoundFinishers =
+      await roundRepository.isPlayerInRoundFinishers(
+        activeTeamId!,
+        nextPlayerToGuess!,
+      );
+    if (nextPlayerInRoundFinishers) {
+      await roundRepository.addTeamToRoundFinishers(gameId, activeTeamId!);
+      await roundRepository.clearRoundFinishersPlayers(activeTeamId!);
+    }
+    const nextTeamToGuess = await this.nextTeamToGuess(gameId);
+    const nextTeamInRoundFinishers =
+      await roundRepository.isTeamInRoundFinishers(gameId, nextTeamToGuess!);
+    if (nextTeamInRoundFinishers) {
+      await roundRepository.incrementAndGetRoundNumber(gameId);
+      await roundRepository.clearRoundFinishersTeams(gameId);
+    }
+
+    await this.#emitGameState(roomId, gameId);
+    return true;
+  }
+
+  async #endGuessingTime(roomId: string, gameId: string): Promise<void> {
     await gameRepository.saveGameMetadata(gameId, {
       gameStatus: "lastWord",
     });
@@ -209,6 +265,14 @@ class GameService {
       });
       return state;
     });
+  }
+
+  private async nextPlayerToGuess(gameId: string, teamId: string) {
+    return gameRepository.moveLastPlayerToBeginningAndGet(gameId, teamId);
+  }
+
+  private async nextTeamToGuess(gameId: string) {
+    return gameRepository.moveLastTeamToBeginningAndGet(gameId);
   }
 }
 

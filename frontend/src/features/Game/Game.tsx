@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import {
+  useFinishRoundMutation,
   useJoinTeamMutation,
   useStartGameMutation,
   useStartRoundMutation,
@@ -28,6 +29,7 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
   const [joinTeam] = useJoinTeamMutation();
   const [startGame] = useStartGameMutation();
   const [startRound] = useStartRoundMutation();
+  const [finishRound] = useFinishRoundMutation();
 
   useEffect(() => {
     console.log({ data: gameState });
@@ -73,6 +75,19 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
     }
   };
 
+  const handleFinishRound = async (gameId: string) => {
+    const req = {
+      roomId,
+      gameId,
+    };
+
+    try {
+      await finishRound(req);
+    } catch (error) {
+      console.error("Failed to start round:", gameId, error);
+    }
+  };
+
   if (!gameState) {
     return <GameForm isAdmin={isAdmin} roomId={roomId} />;
   }
@@ -93,6 +108,12 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         onClick={() => handleStartRound(gameState?.id)}
       >
         Start round
+      </Button>
+      <Button
+        disabled={!isActivePlayer}
+        onClick={() => handleFinishRound(gameState?.id)}
+      >
+        Finish round
       </Button>
       <Divider sx={{ marginBottom: 2 }} />
 
@@ -118,6 +139,9 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         </Typography>
         <Typography>
           Remaining Time: <strong>{gameState.remainingTime} seconds</strong>
+        </Typography>
+        <Typography>
+          Current round: <strong>{gameState.currentRound}</strong>
         </Typography>
       </CardContent>
 
