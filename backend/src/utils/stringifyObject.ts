@@ -3,7 +3,7 @@ export function stringifyObjectValues<T extends object>(
 ): Record<keyof T, string> {
   return Object.fromEntries(
     Object.entries(obj)
-      .filter(([key]) => key != null)
+      .filter(([, value]) => value != null)
       .map(([key, value]) => [key as keyof T, JSON.stringify(value)]),
   ) as Record<keyof T, string>;
 }
