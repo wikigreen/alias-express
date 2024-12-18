@@ -1,12 +1,7 @@
 import { redisClient } from "../redis";
 import { Player, Room } from "./types";
 import { randomUUID } from "node:crypto";
-import {
-  debugMessage,
-  Optional,
-  parseObjectValues,
-  stringifyObjectValues,
-} from "../utils";
+import { Optional, parseObjectValues, stringifyObjectValues } from "../utils";
 
 const createRoom = async (room: Omit<Room, "id">): Promise<Room> => {
   const roomId = randomUUID();
@@ -19,7 +14,6 @@ const createRoom = async (room: Omit<Room, "id">): Promise<Room> => {
       }),
     ),
   );
-  debugMessage("here");
   return {
     id: roomId,
     status: room.status,

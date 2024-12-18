@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { roomService } from "./roomService";
-import { debugMessage, logErrorMessage } from "../utils";
+import { logErrorMessage } from "../utils";
 
 export const roomRouter = Router();
 export const protectedRoomRouter = Router();
@@ -18,7 +18,6 @@ protectedRoomRouter.use(async (req, res, next) => {
 
 roomRouter.post("/", async (_, res) => {
   const room = await roomService.createRoom();
-  debugMessage({ room });
   res.send(room);
 });
 

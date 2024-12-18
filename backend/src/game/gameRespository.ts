@@ -1,7 +1,6 @@
 import { AliasGameState, GameStatus, Team } from "./types";
 import { redisClient } from "../redis";
 import { parseObjectValues, stringifyObjectValues } from "../utils";
-import { roundRepository } from "../round";
 
 class GameRepository {
   private readonly redisPrefix = "game:";
@@ -121,6 +120,13 @@ class GameRepository {
     return (await client.lRange(teamsKey, 0, 0))?.[0];
   }
 
+  async moveLastTeamToBeginningAndGet(gameId: string): Promise<string | null> {
+    const client = await redisClient;
+    const teamsKey = `${this.redisPrefix}${gameId}:teams`;
+
+    return await client.rPopLPush(teamsKey, teamsKey);
+  }
+
   // Get a team by ID
   async getFirstPlayerId(gameId: string, teamId: string): Promise<string> {
     const client = await redisClient;
@@ -129,6 +135,16 @@ class GameRepository {
     const players = await client.lRange(`${teamKey}:players`, 0, 0); // Fetch players from Redis list
 
     return players?.[0];
+  }
+
+  async moveLastPlayerToBeginningAndGet(
+    gameId: string,
+    teamId: string,
+  ): Promise<string | null> {
+    const client = await redisClient;
+    const teamKey = `${this.redisPrefix}${gameId}:team:${teamId}`;
+
+    return await client.rPopLPush(`${teamKey}:players`, `${teamKey}:players`);
   }
 
   async getTeamIds(gameId: string): Promise<string[]> {
@@ -227,19 +243,6 @@ class GameRepository {
     const playerId = await client.lPop(`${teamKey}:players`);
 
     return playerId || null; // Return the player ID or null if the list is empty
-  }
-
-  async startRound(gameId: string, teamId: string) {
-    const currentRound = await this.getCurrentRound(gameId);
-    await roundRepository.saveRound(`${currentRound || 1}`, teamId, gameId);
-  }
-
-  async getCurrentRound(gameId: string): Promise<number | null> {
-    const roundIds = await roundRepository.getAllRoundIdsForGame(gameId);
-    if (roundIds?.length < 1) {
-      return null;
-    }
-    return Math.max(...roundIds);
   }
 }
 

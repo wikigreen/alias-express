@@ -140,6 +140,9 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         <Typography>
           Remaining Time: <strong>{gameState.remainingTime} seconds</strong>
         </Typography>
+        <Typography>
+          Current round: <strong>{gameState.currentRound}</strong>
+        </Typography>
       </CardContent>
 
       {/* Game Settings Section */}

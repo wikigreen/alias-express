@@ -5,6 +5,8 @@ import { parseObjectValues, stringifyObjectValues } from "../utils";
 class RoundRepository {
   private readonly redisPrefix = "round:";
   private readonly redisGamePrefix = "game:";
+  private readonly roundFinishersPlayers = "roundFinishersPlayers";
+  private readonly roundFinishersTeams = "roundFinishersTeams";
 
   // Save a new round
   async saveRound(
@@ -23,21 +25,6 @@ class RoundRepository {
 
     // Add round to the team's list of rounds
     await client.sAdd(`${this.redisPrefix}team${teamId}:rounds`, roundId);
-
-    // Add round to the general round index
-    await client.sAdd(
-      `${this.redisGamePrefix}${gameId}:${this.redisPrefix}index`,
-      roundId,
-    );
-  }
-
-  async getAllRoundIdsForGame(gameId: string): Promise<number[]> {
-    const client = await redisClient;
-    const roundIds =
-      (await client.sMembers(
-        `${this.redisGamePrefix}${gameId}:${this.redisPrefix}index`,
-      )) || [];
-    return roundIds.map(Number);
   }
 
   // Retrieve a specific round's information by roundId and teamId
@@ -79,9 +66,7 @@ class RoundRepository {
     gameId: string,
   ): Promise<Record<string, Record<string, RoundInfo>>> {
     const client = await redisClient;
-    const roundIds = await client.sMembers(
-      `${this.redisGamePrefix}${gameId}:${this.redisPrefix}index`,
-    );
+    const roundIds = await this.getAllRoundIdsForGame(gameId);
     const groupedRounds: Record<string, Record<string, RoundInfo>> = {};
 
     for (const roundId of roundIds) {
@@ -165,27 +150,76 @@ class RoundRepository {
 
     // Remove the round from the team's list
     await client.sRem(`${this.redisPrefix}team:${teamId}:rounds`, roundId);
-
-    // Check if the round still exists for any other team
-    const remainingTeams = await client.keys(
-      `${this.redisGamePrefix}${gameId}:${this.redisPrefix}${roundId}:team:*`,
-    );
-    if (remainingTeams.length === 0) {
-      await client.sRem(`${this.redisPrefix}index`, roundId);
-    }
   }
 
-  // Check if a specific round exists for a team
-  async roundExists(
-    gameId: string,
-    roundId: string,
-    teamId: string,
-  ): Promise<boolean> {
+  // Add a player to the set of round finishers
+  async addPlayerToRoundFinishers(teamId: string, playerId: string) {
     const client = await redisClient;
-    const exists = await client.exists(
-      `${this.redisGamePrefix}${gameId}:${this.redisPrefix}${roundId}:team:${teamId}`,
+    await client.sAdd(`${this.roundFinishersPlayers}:${teamId}`, playerId);
+  }
+
+  // Check if a player is in the set of round finishers
+  async isPlayerInRoundFinishers(teamId: string, playerId: string) {
+    const client = await redisClient;
+    return await client.sIsMember(
+      `${this.roundFinishersPlayers}:${teamId}`,
+      playerId,
     );
-    return exists > 0;
+  }
+
+  // Add a team to the set of round finishers
+  async addTeamToRoundFinishers(gameId: string, teamId: string) {
+    const client = await redisClient;
+    await client.sAdd(`${this.roundFinishersTeams}:${gameId}`, teamId);
+  }
+
+  // Check if a team is in the set of round finishers
+  async isTeamInRoundFinishers(gameId: string, teamId: string) {
+    const client = await redisClient;
+    return await client.sIsMember(
+      `${this.roundFinishersTeams}:${gameId}`,
+      teamId,
+    );
+  }
+
+  // Clear the set of round finishers for players
+  async clearRoundFinishersPlayers(teamId: string) {
+    const client = await redisClient;
+    await client.del(`${this.roundFinishersPlayers}:${teamId}`);
+  }
+
+  // Clear the set of round finishers for teams
+  async clearRoundFinishersTeams(gameId: string) {
+    const client = await redisClient;
+    await client.del(`${this.roundFinishersTeams}:${gameId}`);
+  }
+
+  async setRoundNumber(gameId: string, roundNum: number): Promise<void> {
+    const client = await redisClient;
+    await client.set(`currentRoundNum:${gameId}`, roundNum);
+  }
+
+  async getRoundNumber(gameId: string): Promise<number> {
+    const client = await redisClient;
+    return Number(await client.get(`currentRoundNum:${gameId}`));
+  }
+
+  async incrementAndGetRoundNumber(gameId: string) {
+    const client = await redisClient;
+    await client.incr(`currentRoundNum:${gameId}`);
+    await client.get(`currentRoundNum:${gameId}`);
+  }
+
+  async getAllRoundIdsForGame(gameId: string) {
+    const currentRound = await this.getRoundNumber(gameId);
+    return this.#numberRange(1, currentRound + 1);
+  }
+
+  #numberRange(start: number, end: number) {
+    if (isNaN(start) || isNaN(end)) {
+      return [];
+    }
+    return new Array(end - start).fill(0).map((d, i) => i + start);
   }
 }
 

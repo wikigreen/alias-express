@@ -23,6 +23,7 @@ type AliasGameState = {
   gameSettings: GameSettings;
   gameStatus: GameStatus;
   roundStartedAt: Date | null;
+  currentRound: number;
   isActivePlayer: boolean;
 };
 
