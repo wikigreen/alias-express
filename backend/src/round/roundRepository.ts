@@ -10,7 +10,7 @@ class RoundRepository {
   private readonly roundFinishersTeams = "roundFinishersTeams";
 
   async saveGuess(
-    roundId: string,
+    roundId: string | number,
     teamId: string,
     gameId: string,
     guess: Partial<Guess> = {},

@@ -19,6 +19,7 @@ export type GameStatus =
   | "paused"
   | "completed"
   | "ongoingRound"
+  | "guessesCorrection"
   | "lastWord";
 
 export type AliasGameState = {

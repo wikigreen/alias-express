@@ -48,10 +48,14 @@ export const initSocketIo = (server: ReturnType<typeof createServer>) => {
       const state = await gameService.getFullGameState(currentGameId);
 
       if (state) {
+        socket.join(state.id);
         socketio.to(playerId).emit("gameState", state);
         socketio
           .to(playerId)
           .emit("isActivePlayer", state?.currentPlayer === playerId);
+        if (state.currentTeam != null) {
+          await gameService.emitGuesses(state.id, state.currentTeam, playerId);
+        }
       }
     });
 
