@@ -86,3 +86,23 @@ gameRouter.patch("/round/stop", async (req, res) => {
   res.status(204);
   res.send();
 });
+
+//Start round
+gameRouter.post("/guess", async (req, res) => {
+  const roomId = req.body?.roomId;
+  const gameId = req.body?.gameId;
+  const playerId = req.cookies?.[`room:${roomId}`];
+  const isFinished = await gameService.registerGuess(
+    roomId,
+    gameId,
+    playerId,
+    !!req.body?.guessed,
+  );
+  if (!isFinished) {
+    res.status(409);
+    res.send("You dont have permission to guess");
+    return;
+  }
+  res.status(204);
+  res.send();
+});

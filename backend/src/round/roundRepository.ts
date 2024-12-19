@@ -1,6 +1,7 @@
 import { redisClient } from "../redis";
-import { RoundInfo } from "./types";
+import { Guess } from "./types";
 import { parseObjectValues, stringifyObjectValues } from "../utils";
+import { v4 as uuid } from "uuid";
 
 class RoundRepository {
   private readonly redisPrefix = "round:";
@@ -8,51 +9,80 @@ class RoundRepository {
   private readonly roundFinishersPlayers = "roundFinishersPlayers";
   private readonly roundFinishersTeams = "roundFinishersTeams";
 
-  // Save a new round
-  async saveRound(
-    roundId: string,
+  async saveGuess(
+    roundId: string | number,
     teamId: string,
     gameId: string,
-    roundInfo: Partial<RoundInfo> = {},
+    guess: Partial<Guess> = {},
   ): Promise<void> {
     const client = await redisClient;
 
-    // Save round metadata
     await client.hSet(
       `${this.redisGamePrefix}${gameId}:${this.redisPrefix}${roundId}:team:${teamId}`,
-      stringifyObjectValues(roundInfo),
+      stringifyObjectValues({ [uuid()]: guess }),
     );
-
-    // Add round to the team's list of rounds
-    await client.sAdd(`${this.redisPrefix}team${teamId}:rounds`, roundId);
   }
 
-  // Retrieve a specific round's information by roundId and teamId
-  async getRoundByTeam(
+  async updateGuess(
     gameId: string,
     roundId: string,
     teamId: string,
-  ): Promise<RoundInfo | null> {
+    { id, guessed, word }: Partial<Guess>,
+  ): Promise<void> {
+    if (id == null) {
+      return;
+    }
+    const client = await redisClient;
+    const roundData = await client.hGet(
+      `${this.redisGamePrefix}${gameId}:${this.redisPrefix}${roundId}:team:${teamId}`,
+      id,
+    );
+    if (!roundData) {
+      return;
+    }
+    const oldGuess = JSON.parse(roundData) as Partial<Guess>;
+    await client.hSet(
+      `${this.redisGamePrefix}${gameId}:${this.redisPrefix}${roundId}:team:${teamId}`,
+      stringifyObjectValues({
+        [id]: {
+          ...oldGuess,
+          ...(guessed != null ? { guessed } : {}),
+          ...(word != null ? { word } : {}),
+        },
+      }),
+    );
+  }
+
+  async getGuessesOfRoundByTeam(
+    gameId: string,
+    roundId: string | number,
+    teamId: string,
+  ): Promise<Guess[]> {
     const client = await redisClient;
     const roundData = await client.hGetAll(
       `${this.redisGamePrefix}${gameId}:${this.redisPrefix}${roundId}:team:${teamId}`,
     );
-    return roundData ? (parseObjectValues(roundData) as RoundInfo) : null;
+    const guessesMap = parseObjectValues(roundData) as Record<string, Guess>;
+
+    return Object.entries(guessesMap || {}).map(([id, guess]) => ({
+      ...guess,
+      id,
+    }));
   }
 
-  // Retrieve all rounds for a specific team
   async getRoundsByTeam(
     gameId: string,
     teamId: string,
-  ): Promise<Record<string, RoundInfo>> {
-    const client = await redisClient;
-    const roundIds = await client.sMembers(
-      `${this.redisGamePrefix}${gameId}:${this.redisPrefix}team:${teamId}:rounds`,
-    );
-    const rounds: Record<string, RoundInfo> = {};
+  ): Promise<Record<number, Guess[]>> {
+    const roundIds = await this.getAllRoundIdsForGame(gameId);
+    const rounds: Record<number, Guess[]> = {};
 
     for (const roundId of roundIds) {
-      const roundData = await this.getRoundByTeam(gameId, roundId, teamId);
+      const roundData = await this.getGuessesOfRoundByTeam(
+        gameId,
+        roundId,
+        teamId,
+      );
       if (roundData) {
         rounds[roundId] = roundData;
       }
@@ -61,13 +91,12 @@ class RoundRepository {
     return rounds;
   }
 
-  // Retrieve all round data grouped by round number and teams
   async getAllRoundsGrouped(
     gameId: string,
-  ): Promise<Record<string, Record<string, RoundInfo>>> {
+  ): Promise<Record<string, Record<string, Guess[]>>> {
     const client = await redisClient;
     const roundIds = await this.getAllRoundIdsForGame(gameId);
-    const groupedRounds: Record<string, Record<string, RoundInfo>> = {};
+    const groupedRounds: Record<string, Record<string, Guess[]>> = {};
 
     for (const roundId of roundIds) {
       const teamKeys = await client.keys(
@@ -77,11 +106,12 @@ class RoundRepository {
       groupedRounds[roundId] = {};
       for (const teamKey of teamKeys) {
         const teamId = teamKey.split(":").pop();
-        const roundData = await client.hGetAll(teamKey);
-        if (teamId && roundData) {
-          groupedRounds[roundId][teamId] = parseObjectValues(
-            roundData,
-          ) as RoundInfo;
+        if (teamId) {
+          groupedRounds[roundId][teamId] = await this.getGuessesOfRoundByTeam(
+            gameId,
+            roundId,
+            teamId,
+          );
         }
       }
     }
@@ -89,53 +119,6 @@ class RoundRepository {
     return groupedRounds;
   }
 
-  // Update a specific round
-  async updateRound(
-    gameId: string,
-    roundId: string,
-    teamId: string,
-    updates: Partial<RoundInfo>,
-  ): Promise<void> {
-    const client = await redisClient;
-
-    await client.hSet(
-      `${this.redisGamePrefix}${gameId}:${this.redisPrefix}${roundId}:team:${teamId}`,
-      stringifyObjectValues(updates),
-    );
-  }
-
-  // Update a specific guess status
-  async updateGuessStatus(
-    gameId: string,
-    roundId: string,
-    teamId: string,
-    word: string,
-    guessed: boolean,
-  ): Promise<void> {
-    const client = await redisClient;
-    const roundKey = `${this.redisGamePrefix}${gameId}:${this.redisPrefix}${roundId}:team:${teamId}`;
-
-    // Retrieve the round data
-    const roundData = await client.hGetAll(roundKey);
-    if (!roundData) {
-      throw new Error(`Round ${roundId} for team ${teamId} not found.`);
-    }
-
-    const roundInfo = parseObjectValues(roundData) as RoundInfo;
-
-    // Update the specific guess
-    const updatedGuesses = roundInfo.guesses.map((guess) =>
-      guess.word === word ? { ...guess, guessed } : guess,
-    );
-
-    // Save the updated round info
-    await client.hSet(
-      roundKey,
-      stringifyObjectValues({ guesses: updatedGuesses }),
-    );
-  }
-
-  // Delete a specific round
   async deleteRound(
     gameId: string,
     roundId: string,
@@ -143,13 +126,9 @@ class RoundRepository {
   ): Promise<void> {
     const client = await redisClient;
 
-    // Delete the round data
     await client.del(
       `${this.redisGamePrefix}${gameId}:${this.redisPrefix}${roundId}:team:${teamId}`,
     );
-
-    // Remove the round from the team's list
-    await client.sRem(`${this.redisPrefix}team:${teamId}:rounds`, roundId);
   }
 
   // Add a player to the set of round finishers
@@ -207,7 +186,7 @@ class RoundRepository {
   async incrementAndGetRoundNumber(gameId: string) {
     const client = await redisClient;
     await client.incr(`currentRoundNum:${gameId}`);
-    await client.get(`currentRoundNum:${gameId}`);
+    return await client.get(`currentRoundNum:${gameId}`);
   }
 
   async getAllRoundIdsForGame(gameId: string) {

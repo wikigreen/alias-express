@@ -5,6 +5,7 @@ import { socketio } from "../index";
 import { roomService } from "../room/roomService";
 import { Optional } from "../utils";
 import { roundRepository } from "../round";
+import { Guess } from "../round/types";
 
 class GameService {
   // Create a new game with a unique gameId and copy words from the global list
@@ -236,6 +237,51 @@ class GameService {
     return true;
   }
 
+  async registerGuess(
+    roomId: string,
+    gameId: string,
+    playerId: string,
+    guessed: boolean,
+  ): Promise<boolean> {
+    if (!roomId || !gameId) {
+      return false;
+    }
+    const gameStatus = await this.getGameStatus(gameId);
+
+    if (
+      !gameStatus ||
+      !new Set<GameStatus>(["lastWord", "ongoingRound"]).has(gameStatus)
+    ) {
+      return false;
+    }
+
+    const { playerId: activePlayerId, teamId: activeTeamId } =
+      await this.getActivePlayer(gameId);
+
+    if (playerId !== activePlayerId) {
+      return false;
+    }
+
+    const currentRound = await roundRepository.getRoundNumber(gameId);
+
+    await roundRepository.saveGuess(currentRound, activeTeamId!, gameId, {
+      guessed,
+      word: uuid(),
+      createTime: new Date().getTime(),
+    });
+
+    await this.emitGuesses(roomId, gameId);
+
+    if (gameStatus === "lastWord") {
+      await gameRepository.saveGameMetadata(gameId, {
+        gameStatus: "guessesCorrection",
+      });
+      await this.#emitGameState(roomId, gameId);
+    }
+
+    return true;
+  }
+
   async #endGuessingTime(roomId: string, gameId: string): Promise<void> {
     await gameRepository.saveGameMetadata(gameId, {
       gameStatus: "lastWord",
@@ -245,6 +291,23 @@ class GameService {
 
   async getGameStatus(gameId: string): Promise<GameStatus | null> {
     return await gameRepository.getGameStatus(gameId);
+  }
+
+  async emitGuesses(
+    gameId: string,
+    teamId: string,
+    playerId?: string,
+  ): Promise<Guess[]> {
+    const currentRound = await roundRepository.getRoundNumber(gameId);
+    const guesses = await roundRepository.getGuessesOfRoundByTeam(
+      gameId,
+      currentRound,
+      teamId,
+    );
+
+    socketio.to(playerId || gameId).emit("guesses", guesses);
+
+    return guesses;
   }
 
   async #emitGameState(
