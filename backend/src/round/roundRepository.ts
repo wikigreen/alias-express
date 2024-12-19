@@ -9,7 +9,6 @@ class RoundRepository {
   private readonly roundFinishersPlayers = "roundFinishersPlayers";
   private readonly roundFinishersTeams = "roundFinishersTeams";
 
-  // Save a new round
   async saveGuess(
     roundId: string,
     teamId: string,
@@ -18,14 +17,12 @@ class RoundRepository {
   ): Promise<void> {
     const client = await redisClient;
 
-    // Save round metadata
     await client.hSet(
       `${this.redisGamePrefix}${gameId}:${this.redisPrefix}${roundId}:team:${teamId}`,
       stringifyObjectValues({ [uuid()]: guess }),
     );
   }
 
-  // Update a specific round
   async updateGuess(
     gameId: string,
     roundId: string,
@@ -56,7 +53,6 @@ class RoundRepository {
     );
   }
 
-  // Retrieve a specific round's information by roundId and teamId
   async getGuessesOfRoundByTeam(
     gameId: string,
     roundId: string | number,
@@ -74,7 +70,6 @@ class RoundRepository {
     }));
   }
 
-  // Retrieve all rounds for a specific team
   async getRoundsByTeam(
     gameId: string,
     teamId: string,
@@ -96,7 +91,6 @@ class RoundRepository {
     return rounds;
   }
 
-  // Retrieve all round data grouped by round number and teams
   async getAllRoundsGrouped(
     gameId: string,
   ): Promise<Record<string, Record<string, Guess[]>>> {
@@ -125,7 +119,6 @@ class RoundRepository {
     return groupedRounds;
   }
 
-  // Delete a specific round
   async deleteRound(
     gameId: string,
     roundId: string,
@@ -133,7 +126,6 @@ class RoundRepository {
   ): Promise<void> {
     const client = await redisClient;
 
-    // Delete the round data
     await client.del(
       `${this.redisGamePrefix}${gameId}:${this.redisPrefix}${roundId}:team:${teamId}`,
     );
