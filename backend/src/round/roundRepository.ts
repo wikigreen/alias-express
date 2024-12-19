@@ -194,7 +194,7 @@ class RoundRepository {
   async incrementAndGetRoundNumber(gameId: string) {
     const client = await redisClient;
     await client.incr(`currentRoundNum:${gameId}`);
-    await client.get(`currentRoundNum:${gameId}`);
+    return await client.get(`currentRoundNum:${gameId}`);
   }
 
   async getAllRoundIdsForGame(gameId: string) {
