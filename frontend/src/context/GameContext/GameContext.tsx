@@ -7,6 +7,7 @@ interface GameStateContextType {
   players: Player[];
   gameState: AliasGameState | null;
   isActivePlayer: boolean;
+  guesses: Guess[];
 }
 
 export const GameStateContext = createContext<GameStateContextType>(
@@ -46,7 +47,15 @@ type GameStatus =
   | "paused"
   | "completed"
   | "ongoingRound"
+  | "guessesCorrection"
   | "lastWord";
+
+export interface Guess {
+  id: string;
+  word: string;
+  guessed: boolean;
+  createTime: number;
+}
 
 interface GameStateProviderProps {
   roomId?: string;
@@ -56,11 +65,13 @@ interface GameStateProviderProps {
 export const GameStateProvider = ({
   children,
   roomId,
+  gameId,
 }: PropsWithChildren<GameStateProviderProps>) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [isActivePlayer, setIsActivePlayer] = useState<boolean>(false);
   const [gameState, setGameState] = useState<AliasGameState | null>(null);
+  const [guesses, setGuesses] = useState<Guess[]>([]);
 
   useEffect(() => {
     if (roomId) {
@@ -81,6 +92,10 @@ export const GameStateProvider = ({
         setGameState(updatedState);
       });
 
+      newSocket.on("guesses", (guesses: Guess[]) => {
+        setGuesses(guesses);
+      });
+
       return () => {
         newSocket.disconnect();
       };
@@ -88,14 +103,18 @@ export const GameStateProvider = ({
   }, [roomId]);
 
   useEffect(() => {
-    if (socket) {
+    if (socket && gameId != null) {
       socket.emit("connectGame");
     }
-  }, [socket]);
+  }, [socket, gameId]);
+
+  useEffect(() => {
+    console.log("Guesses", guesses);
+  }, [guesses]);
 
   return (
     <GameStateContext.Provider
-      value={{ socket, players, gameState, isActivePlayer }}
+      value={{ socket, players, gameState, isActivePlayer, guesses }}
     >
       {children}
     </GameStateContext.Provider>

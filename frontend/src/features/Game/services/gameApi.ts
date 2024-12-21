@@ -40,6 +40,16 @@ export const gameApi = createApi({
         body,
       }),
     }),
+    makeGuess: builder.mutation<
+      void,
+      { roomId: string; gameId: string; guessed: boolean }
+    >({
+      query: (body) => ({
+        url: "guess",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -49,4 +59,5 @@ export const {
   useStartGameMutation,
   useStartRoundMutation,
   useFinishRoundMutation,
+  useMakeGuessMutation,
 } = gameApi;

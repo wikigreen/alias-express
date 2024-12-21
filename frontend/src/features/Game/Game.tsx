@@ -14,6 +14,7 @@ import {
 import {
   useFinishRoundMutation,
   useJoinTeamMutation,
+  useMakeGuessMutation,
   useStartGameMutation,
   useStartRoundMutation,
 } from "./services";
@@ -30,6 +31,7 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
   const [startGame] = useStartGameMutation();
   const [startRound] = useStartRoundMutation();
   const [finishRound] = useFinishRoundMutation();
+  const [makeGuess] = useMakeGuessMutation();
 
   useEffect(() => {
     console.log({ data: gameState });
@@ -88,6 +90,20 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
     }
   };
 
+  const handleMakeGuess = async (gameId: string, guessed: boolean) => {
+    const req = {
+      roomId,
+      gameId,
+      guessed,
+    };
+
+    try {
+      await makeGuess(req);
+    } catch (error) {
+      console.error("Failed to make guess:", gameId, error);
+    }
+  };
+
   if (!gameState) {
     return <GameForm isAdmin={isAdmin} roomId={roomId} />;
   }
@@ -114,6 +130,19 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         onClick={() => handleFinishRound(gameState?.id)}
       >
         Finish round
+      </Button>
+      <Divider orientation="vertical" variant="middle" flexItem />
+      <Button
+        disabled={!isActivePlayer}
+        onClick={() => handleMakeGuess(gameState?.id, true)}
+      >
+        Guess work
+      </Button>
+      <Button
+        disabled={!isActivePlayer}
+        onClick={() => handleMakeGuess(gameState?.id, false)}
+      >
+        Skip word
       </Button>
       <Divider sx={{ marginBottom: 2 }} />
 
