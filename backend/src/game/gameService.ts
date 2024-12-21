@@ -270,7 +270,7 @@ class GameService {
       createTime: new Date().getTime(),
     });
 
-    await this.emitGuesses(roomId, gameId);
+    await this.emitGuesses(gameId, activeTeamId!);
 
     if (gameStatus === "lastWord") {
       await gameRepository.saveGameMetadata(gameId, {

@@ -1,10 +1,4 @@
-import {
-  createContext,
-  PropsWithChildren,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, PropsWithChildren, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { Player } from "./types";
 
@@ -71,14 +65,13 @@ interface GameStateProviderProps {
 export const GameStateProvider = ({
   children,
   roomId,
+  gameId,
 }: PropsWithChildren<GameStateProviderProps>) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [isActivePlayer, setIsActivePlayer] = useState<boolean>(false);
   const [gameState, setGameState] = useState<AliasGameState | null>(null);
   const [guesses, setGuesses] = useState<Guess[]>([]);
-
-  const gameId = useMemo(() => gameState?.id, [gameState?.id]);
 
   useEffect(() => {
     if (roomId) {
@@ -116,7 +109,7 @@ export const GameStateProvider = ({
   }, [socket, gameId]);
 
   useEffect(() => {
-    console.log({ guesses });
+    console.log("Guesses", guesses);
   }, [guesses]);
 
   return (
