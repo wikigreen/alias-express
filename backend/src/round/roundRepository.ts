@@ -107,6 +107,9 @@ class RoundRepository {
       for (const teamKey of teamKeys) {
         const teamId = teamKey.split(":").pop();
         if (teamId) {
+          if (!groupedRounds[roundId]) {
+            groupedRounds[roundId] = {};
+          }
           groupedRounds[roundId][teamId] = await this.getGuessesOfRoundByTeam(
             gameId,
             roundId,

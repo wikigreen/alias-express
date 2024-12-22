@@ -1,4 +1,4 @@
-import { AliasGameState, GameStatus, Team } from "./types";
+import { AliasGameState, GameSettings, GameStatus, Team } from "./types";
 import { redisClient } from "../redis";
 import { parseObjectValues, stringifyObjectValues } from "../utils";
 
@@ -95,6 +95,18 @@ class GameRepository {
     );
 
     return (JSON.parse(gameStatusJson!) as GameStatus) || null;
+  }
+
+  // Fetch the full game state, including current word, teams, etc.
+  async getGameSettings(gameId: string): Promise<GameSettings | null> {
+    const client = await redisClient;
+
+    const gameStatusJson = await client.hGet(
+      `${this.redisPrefix}${gameId}`,
+      "gameSettings",
+    );
+
+    return (JSON.parse(gameStatusJson!) as GameSettings) || null;
   }
 
   // Get a team by ID

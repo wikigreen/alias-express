@@ -226,9 +226,40 @@ class GameService {
       await roundRepository.clearRoundFinishersPlayers(activeTeamId!);
     }
     const nextTeamToGuess = await this.nextTeamToGuess(gameId);
-    const nextTeamInRoundFinishers =
-      await roundRepository.isTeamInRoundFinishers(gameId, nextTeamToGuess!);
-    if (nextTeamInRoundFinishers) {
+    const roundFinished = await roundRepository.isTeamInRoundFinishers(
+      gameId,
+      nextTeamToGuess!,
+    );
+    if (roundFinished) {
+      const allGuesses = await roundRepository.getAllRoundsGrouped(gameId);
+      const flatGuesses: (Guess & { teamId: string })[] = Object.entries(
+        allGuesses,
+      ).flatMap(([, guessesPerTeam]) =>
+        Object.entries(guessesPerTeam).flatMap(([teamId, guess]) =>
+          guess.map((g) => ({ ...g, teamId })),
+        ),
+      );
+
+      const { winningScore } = (await gameRepository.getGameSettings(
+        gameId,
+      )) || { winningScore: Infinity };
+
+      const result = flatGuesses.reduce(
+        (acc, guess) => {
+          acc[guess.teamId] = (acc[guess.teamId] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
+      const haveWinner = Object.entries(result).some(
+        ([, value]) => value >= winningScore,
+      );
+
+      if (haveWinner) {
+        // Find winner and notify everyone
+      }
+
       await roundRepository.incrementAndGetRoundNumber(gameId);
       await roundRepository.clearRoundFinishersTeams(gameId);
     }
