@@ -231,35 +231,7 @@ class GameService {
       nextTeamToGuess!,
     );
     if (roundFinished) {
-      const allGuesses = await roundRepository.getAllRoundsGrouped(gameId);
-      const flatGuesses: (Guess & { teamId: string })[] = Object.entries(
-        allGuesses,
-      ).flatMap(([, guessesPerTeam]) =>
-        Object.entries(guessesPerTeam).flatMap(([teamId, guess]) =>
-          guess.map((g) => ({ ...g, teamId })),
-        ),
-      );
-
-      const { winningScore } = (await gameRepository.getGameSettings(
-        gameId,
-      )) || { winningScore: Infinity };
-
-      const result = flatGuesses.reduce(
-        (acc, guess) => {
-          acc[guess.teamId] = (acc[guess.teamId] || 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>,
-      );
-
-      const haveWinner = Object.entries(result).some(
-        ([, value]) => value >= winningScore,
-      );
-
-      if (haveWinner) {
-        // Find winner and notify everyone
-      }
-
+      const winner = await this.getWinner(gameId);
       await roundRepository.incrementAndGetRoundNumber(gameId);
       await roundRepository.clearRoundFinishersTeams(gameId);
     }
@@ -424,6 +396,39 @@ class GameService {
 
   private async nextTeamToGuess(gameId: string) {
     return gameRepository.moveLastTeamToBeginningAndGet(gameId);
+  }
+
+  private async getWinner(gameId: string) {
+    const allGuesses = await roundRepository.getAllRoundsGrouped(gameId);
+    const flatGuesses: (Guess & { teamId: string })[] = Object.entries(
+      allGuesses,
+    ).flatMap(([, guessesPerTeam]) =>
+      Object.entries(guessesPerTeam).flatMap(([teamId, guess]) =>
+        guess.map((g) => ({ ...g, teamId })),
+      ),
+    );
+
+    const { winningScore } = (await gameRepository.getGameSettings(gameId)) || {
+      winningScore: Infinity,
+    };
+
+    const result = flatGuesses.reduce(
+      (acc, guess) => {
+        acc[guess.teamId] = (acc[guess.teamId] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    const [winner] = Object.entries(result)
+      .filter(([, value]) => value >= winningScore)
+      .reduce(
+        ([prevKey, prevValue], [currKey, currValue]) =>
+          prevValue >= currValue ? [prevKey, prevValue] : [currKey, currValue],
+        ["", 0] as [string, number],
+      );
+
+    return winner.length > 0 ? winner : null;
   }
 }
 
