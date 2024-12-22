@@ -4,7 +4,6 @@ import { parse as parseCookies } from "cookie";
 import { roomService } from "../room/roomService";
 import { createServer } from "node:http";
 import { gameService } from "../game/gameService";
-import { debugMessage } from "../utils";
 
 export const initSocketIo = (server: ReturnType<typeof createServer>) => {
   const socketio = new Server(server, {
@@ -47,8 +46,6 @@ export const initSocketIo = (server: ReturnType<typeof createServer>) => {
     socket.on("connectGame", async (test) => {
       const currentGameId = (await roomService.getRoom(roomId))?.currentGameId;
       const state = await gameService.getFullGameState(currentGameId);
-
-      debugMessage({ test });
 
       if (state) {
         socket.join(state.id);

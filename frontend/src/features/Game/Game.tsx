@@ -33,10 +33,6 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
   const [finishRound] = useFinishRoundMutation();
   const [makeGuess] = useMakeGuessMutation();
 
-  useEffect(() => {
-    console.log({ data: gameState });
-  }, [gameState]);
-
   const handleJoinTeam = async (teamId: string, gameId: string) => {
     const gameSettings: JoinTeamRequest = {
       roomId,
