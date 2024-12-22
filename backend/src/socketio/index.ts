@@ -4,6 +4,7 @@ import { parse as parseCookies } from "cookie";
 import { roomService } from "../room/roomService";
 import { createServer } from "node:http";
 import { gameService } from "../game/gameService";
+import { debugMessage } from "../utils";
 
 export const initSocketIo = (server: ReturnType<typeof createServer>) => {
   const socketio = new Server(server, {
@@ -43,9 +44,11 @@ export const initSocketIo = (server: ReturnType<typeof createServer>) => {
       socketio.to(roomId).emit("playerConnect", players);
     });
 
-    socket.on("connectGame", async () => {
+    socket.on("connectGame", async (test) => {
       const currentGameId = (await roomService.getRoom(roomId))?.currentGameId;
       const state = await gameService.getFullGameState(currentGameId);
+
+      debugMessage({ test });
 
       if (state) {
         socket.join(state.id);
@@ -55,6 +58,7 @@ export const initSocketIo = (server: ReturnType<typeof createServer>) => {
           .emit("isActivePlayer", state?.currentPlayer === playerId);
         if (state.currentTeam != null) {
           await gameService.emitGuesses(state.id, state.currentTeam, playerId);
+          await gameService.emitScore(state.id, state.currentTeam, playerId);
         }
       }
     });

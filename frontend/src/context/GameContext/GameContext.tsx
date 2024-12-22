@@ -1,6 +1,13 @@
-import { createContext, PropsWithChildren, useEffect, useState } from "react";
+import {
+  createContext,
+  PropsWithChildren,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { io, Socket } from "socket.io-client";
 import { Player } from "./types";
+import { useGameScore } from "./hooks";
 
 interface GameStateContextType {
   socket: Socket | null;
@@ -8,6 +15,7 @@ interface GameStateContextType {
   gameState: AliasGameState | null;
   isActivePlayer: boolean;
   guesses: Guess[];
+  score: Record<string, number>;
 }
 
 export const GameStateContext = createContext<GameStateContextType>(
@@ -65,13 +73,20 @@ interface GameStateProviderProps {
 export const GameStateProvider = ({
   children,
   roomId,
-  gameId,
+  gameId: gameIdFromRequest,
 }: PropsWithChildren<GameStateProviderProps>) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [isActivePlayer, setIsActivePlayer] = useState<boolean>(false);
   const [gameState, setGameState] = useState<AliasGameState | null>(null);
   const [guesses, setGuesses] = useState<Guess[]>([]);
+
+  const gameId = useMemo(
+    () => gameState?.id || gameIdFromRequest,
+    [gameState?.id, gameIdFromRequest],
+  );
+
+  const { score, setScore } = useGameScore(gameState?.id || gameId);
 
   useEffect(() => {
     if (roomId) {
@@ -96,6 +111,10 @@ export const GameStateProvider = ({
         setGuesses(guesses);
       });
 
+      newSocket.on("score", (score: Record<string, number>) => {
+        setScore(score);
+      });
+
       return () => {
         newSocket.disconnect();
       };
@@ -103,10 +122,10 @@ export const GameStateProvider = ({
   }, [roomId]);
 
   useEffect(() => {
-    if (socket && gameId != null) {
+    if (socket && (gameState?.id || gameId) != null) {
       socket.emit("connectGame");
     }
-  }, [socket, gameId]);
+  }, [socket, gameState?.id, gameId]);
 
   useEffect(() => {
     console.log("Guesses", guesses);
@@ -114,7 +133,7 @@ export const GameStateProvider = ({
 
   return (
     <GameStateContext.Provider
-      value={{ socket, players, gameState, isActivePlayer, guesses }}
+      value={{ socket, players, gameState, isActivePlayer, guesses, score }}
     >
       {children}
     </GameStateContext.Provider>

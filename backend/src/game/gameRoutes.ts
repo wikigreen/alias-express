@@ -107,3 +107,13 @@ gameRouter.post("/guess", async (req, res) => {
   res.status(204);
   res.send();
 });
+
+//Start round
+gameRouter.post("/info/score/:gameId", async (req, res) => {
+  const { gameId } = req.params;
+  const { teamsIds } = req.body || {};
+
+  res.status(200);
+  const score = await gameService.getScore(gameId, teamsIds);
+  res.send(score);
+});

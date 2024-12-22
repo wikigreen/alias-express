@@ -271,6 +271,7 @@ class GameService {
     });
 
     await this.emitGuesses(gameId, activeTeamId!);
+    await this.emitScore(gameId, activeTeamId!);
 
     if (gameStatus === "lastWord") {
       await gameRepository.saveGameMetadata(gameId, {
@@ -293,6 +294,50 @@ class GameService {
     return await gameRepository.getGameStatus(gameId);
   }
 
+  async getScore(
+    gameId: string,
+    teamsIds: string[] = [],
+  ): Promise<Record<string, number>> {
+    let teamIds = ((await this.getTeams(gameId)) || []).map((team) => team?.id);
+
+    if (teamsIds.length > 0) {
+      const teamIdsSet = new Set<string>(teamsIds);
+      teamIds = teamIds.filter((id) => {
+        return teamIdsSet.has(id);
+      });
+    }
+
+    const rounds = await roundRepository.getAllRoundIdsForGame(gameId);
+
+    const guessesPerTeam = teamIds?.reduce(
+      (prev, curr) => {
+        return { ...prev, ...{ [curr]: [] } };
+      },
+      {} as Record<string, Guess[]>,
+    );
+
+    for (const teamId of teamIds) {
+      for (const round of rounds) {
+        guessesPerTeam[teamId].push(
+          ...(await roundRepository.getGuessesOfRoundByTeam(
+            gameId,
+            round,
+            teamId,
+          )),
+        );
+      }
+    }
+
+    return Object.fromEntries(
+      Object.entries(guessesPerTeam).map(([key, value]) => [
+        key,
+        value
+          .map((guess) => (guess.guessed ? 1 : -1))
+          .reduce((a, b) => a + b, 0),
+      ]),
+    );
+  }
+
   async emitGuesses(
     gameId: string,
     teamId: string,
@@ -308,6 +353,18 @@ class GameService {
     socketio.to(playerId || gameId).emit("guesses", guesses);
 
     return guesses;
+  }
+
+  async emitScore(
+    gameId: string,
+    teamId: string,
+    playerId?: string,
+  ): Promise<Record<string, number>> {
+    const score = await this.getScore(gameId, [teamId]);
+
+    socketio.to(playerId || gameId).emit("score", score);
+
+    return score;
   }
 
   async #emitGameState(

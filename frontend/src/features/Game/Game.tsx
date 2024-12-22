@@ -26,7 +26,7 @@ interface GameFormProps {
 }
 
 const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
-  const { gameState, isActivePlayer } = useGameState();
+  const { gameState, isActivePlayer, score } = useGameState();
   const [joinTeam] = useJoinTeamMutation();
   const [startGame] = useStartGameMutation();
   const [startRound] = useStartRoundMutation();
@@ -201,7 +201,7 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
                 <Typography variant="subtitle1">Name: {team.name}</Typography>
                 <Typography>ID: {team.id}</Typography>
                 <Typography>
-                  Score: <strong>{team.score}</strong>
+                  Score: <strong>{score[team.id]}</strong>
                 </Typography>
                 <Typography>
                   Describer: <strong>{team.describer || "None"}</strong>
