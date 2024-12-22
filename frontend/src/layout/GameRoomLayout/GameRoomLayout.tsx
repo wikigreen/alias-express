@@ -59,7 +59,7 @@ export const GameRoomLayout: React.FC = () => {
   }
 
   return (
-    <GameStateProvider roomId={roomId}>
+    <GameStateProvider roomId={roomId} gameId={data?.currentGameId}>
       <PlayersList />
       <Typography gutterBottom variant="h3" component="div">
         You are welcome player with id {data?.playerId}
