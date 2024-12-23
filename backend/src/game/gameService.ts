@@ -433,11 +433,11 @@ class GameService {
       return null;
     }
 
-    const [winner] = Object.entries(result)
+    const [winner, ...contenders] = Object.entries(result)
       .filter(([, value]) => value === winningScore)
       .map(([key]) => key);
 
-    return winner;
+    return contenders.length < 1 ? winner : null;
   }
 }
 
