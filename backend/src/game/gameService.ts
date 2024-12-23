@@ -421,7 +421,7 @@ class GameService {
 
     const result = flatGuesses.reduce(
       (acc, guess) => {
-        acc[guess.teamId] = (acc[guess.teamId] || 0) + 1;
+        acc[guess.teamId] = (acc[guess.teamId] || 0) + (guess.guessed ? 1 : -1);
         return acc;
       },
       {} as Record<string, number>,
