@@ -79,7 +79,7 @@ class GameService {
     return {
       ...game,
       currentTeam,
-      currentPlayer,
+      currentPlayer: currentPlayer!,
       currentRound,
     };
   }
@@ -226,11 +226,21 @@ class GameService {
       await roundRepository.clearRoundFinishersPlayers(activeTeamId!);
     }
     const nextTeamToGuess = await this.nextTeamToGuess(gameId);
-    const nextTeamInRoundFinishers =
-      await roundRepository.isTeamInRoundFinishers(gameId, nextTeamToGuess!);
-    if (nextTeamInRoundFinishers) {
-      await roundRepository.incrementAndGetRoundNumber(gameId);
-      await roundRepository.clearRoundFinishersTeams(gameId);
+    const roundFinished = await roundRepository.isTeamInRoundFinishers(
+      gameId,
+      nextTeamToGuess!,
+    );
+    if (roundFinished) {
+      const winner = await this.getWinner(gameId);
+      if (!winner) {
+        await roundRepository.incrementAndGetRoundNumber(gameId);
+        await roundRepository.clearRoundFinishersTeams(gameId);
+      } else {
+        await gameRepository.saveGameMetadata(gameId, {
+          gameStatus: "completed",
+          winnerTeamId: winner,
+        });
+      }
     }
 
     await this.#emitGameState(roomId, gameId);
@@ -271,6 +281,7 @@ class GameService {
     });
 
     await this.emitGuesses(gameId, activeTeamId!);
+    await this.emitScore(gameId, activeTeamId!);
 
     if (gameStatus === "lastWord") {
       await gameRepository.saveGameMetadata(gameId, {
@@ -293,6 +304,50 @@ class GameService {
     return await gameRepository.getGameStatus(gameId);
   }
 
+  async getScore(
+    gameId: string,
+    teamsIds: string[] = [],
+  ): Promise<Record<string, number>> {
+    let teamIds = ((await this.getTeams(gameId)) || []).map((team) => team?.id);
+
+    if (teamsIds.length > 0) {
+      const teamIdsSet = new Set<string>(teamsIds);
+      teamIds = teamIds.filter((id) => {
+        return teamIdsSet.has(id);
+      });
+    }
+
+    const rounds = await roundRepository.getAllRoundIdsForGame(gameId);
+
+    const guessesPerTeam = teamIds?.reduce(
+      (prev, curr) => {
+        return { ...prev, ...{ [curr]: [] } };
+      },
+      {} as Record<string, Guess[]>,
+    );
+
+    for (const teamId of teamIds) {
+      for (const round of rounds) {
+        guessesPerTeam[teamId].push(
+          ...(await roundRepository.getGuessesOfRoundByTeam(
+            gameId,
+            round,
+            teamId,
+          )),
+        );
+      }
+    }
+
+    return Object.fromEntries(
+      Object.entries(guessesPerTeam).map(([key, value]) => [
+        key,
+        value
+          .map((guess) => (guess.guessed ? 1 : -1))
+          .reduce((a, b) => a + b, 0),
+      ]),
+    );
+  }
+
   async emitGuesses(
     gameId: string,
     teamId: string,
@@ -308,6 +363,18 @@ class GameService {
     socketio.to(playerId || gameId).emit("guesses", guesses);
 
     return guesses;
+  }
+
+  async emitScore(
+    gameId: string,
+    teamId: string,
+    playerId?: string,
+  ): Promise<Record<string, number>> {
+    const score = await this.getScore(gameId, [teamId]);
+
+    socketio.to(playerId || gameId).emit("score", score);
+
+    return score;
   }
 
   async #emitGameState(
@@ -336,6 +403,39 @@ class GameService {
 
   private async nextTeamToGuess(gameId: string) {
     return gameRepository.moveLastTeamToBeginningAndGet(gameId);
+  }
+
+  private async getWinner(gameId: string) {
+    const allGuesses = await roundRepository.getAllRoundsGrouped(gameId);
+    const flatGuesses: (Guess & { teamId: string })[] = Object.entries(
+      allGuesses,
+    ).flatMap(([, guessesPerTeam]) =>
+      Object.entries(guessesPerTeam).flatMap(([teamId, guess]) =>
+        guess.map((g) => ({ ...g, teamId })),
+      ),
+    );
+
+    const { winningScore } = (await gameRepository.getGameSettings(gameId)) || {
+      winningScore: Infinity,
+    };
+
+    const result = flatGuesses.reduce(
+      (acc, guess) => {
+        acc[guess.teamId] = (acc[guess.teamId] || 0) + (guess.guessed ? 1 : -1);
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    const [winner] = Object.entries(result)
+      .filter(([, value]) => value >= winningScore)
+      .reduce(
+        ([prevKey, prevValue], [currKey, currValue]) =>
+          prevValue >= currValue ? [prevKey, prevValue] : [currKey, currValue],
+        [null, 0] as [string | null, number],
+      );
+
+    return winner;
   }
 }
 

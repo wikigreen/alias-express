@@ -62,7 +62,7 @@ export const PlayersList: React.FC = () => {
           }}
         >
           {[
-            ...players.sort((a, b) => {
+            ...(players || []).sort((a, b) => {
               if (a.online === b.online) return 0;
               return -a.online;
             }),

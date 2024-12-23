@@ -9,6 +9,7 @@ protectedGameRouter.use(async (req, res, next) => {
   const roomId = req.body?.roomId;
   if (!roomId) {
     res.status(403).send("Access denied. Admins only.");
+    return;
   }
   const playerId = req.cookies?.[`room:${roomId}`];
   const isAdmin = await roomService.isAdmin(roomId, playerId);
@@ -70,7 +71,7 @@ gameRouter.patch("/round", async (req, res) => {
   res.send();
 });
 
-//Start round
+//Stop round
 gameRouter.patch("/round/stop", async (req, res) => {
   const roomId = req.body?.roomId;
   const gameId = req.body?.gameId;
@@ -87,7 +88,7 @@ gameRouter.patch("/round/stop", async (req, res) => {
   res.send();
 });
 
-//Start round
+//Make guess
 gameRouter.post("/guess", async (req, res) => {
   const roomId = req.body?.roomId;
   const gameId = req.body?.gameId;
@@ -105,4 +106,14 @@ gameRouter.post("/guess", async (req, res) => {
   }
   res.status(204);
   res.send();
+});
+
+//Get info about score for game
+gameRouter.post("/info/score/:gameId", async (req, res) => {
+  const { gameId } = req.params;
+  const { teamsIds } = req.body || {};
+
+  res.status(200);
+  const score = await gameService.getScore(gameId, teamsIds);
+  res.send(score);
 });
