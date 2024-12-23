@@ -79,7 +79,7 @@ class GameService {
     return {
       ...game,
       currentTeam,
-      currentPlayer,
+      currentPlayer: currentPlayer!,
       currentRound,
     };
   }
@@ -232,8 +232,15 @@ class GameService {
     );
     if (roundFinished) {
       const winner = await this.getWinner(gameId);
-      await roundRepository.incrementAndGetRoundNumber(gameId);
-      await roundRepository.clearRoundFinishersTeams(gameId);
+      if (!winner) {
+        await roundRepository.incrementAndGetRoundNumber(gameId);
+        await roundRepository.clearRoundFinishersTeams(gameId);
+      } else {
+        await gameRepository.saveGameMetadata(gameId, {
+          gameStatus: "completed",
+          winnerTeamId: winner,
+        });
+      }
     }
 
     await this.#emitGameState(roomId, gameId);
@@ -425,10 +432,10 @@ class GameService {
       .reduce(
         ([prevKey, prevValue], [currKey, currValue]) =>
           prevValue >= currValue ? [prevKey, prevValue] : [currKey, currValue],
-        ["", 0] as [string, number],
+        [null, 0] as [string | null, number],
       );
 
-    return winner.length > 0 ? winner : null;
+    return winner;
   }
 }
 

@@ -34,6 +34,7 @@ type AliasGameState = {
   roundStartedAt: Date | null;
   currentRound: number;
   isActivePlayer: boolean;
+  winnerTeamId?: string;
 };
 
 export type Team = {

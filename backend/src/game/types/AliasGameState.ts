@@ -26,9 +26,10 @@ export type AliasGameState = {
   id: string;
   teams: Team[];
   currentTeam: Optional<string>;
-  currentPlayer: string | null;
+  currentPlayer?: string;
   gameSettings: GameSettings;
   gameStatus: GameStatus;
   currentRound: number;
   isActivePlayer: boolean;
+  winnerTeamId?: string;
 };
