@@ -415,10 +415,6 @@ class GameService {
       ),
     );
 
-    const { winningScore } = (await gameRepository.getGameSettings(gameId)) || {
-      winningScore: Infinity,
-    };
-
     const result = flatGuesses.reduce(
       (acc, guess) => {
         acc[guess.teamId] = (acc[guess.teamId] || 0) + (guess.guessed ? 1 : -1);
@@ -427,13 +423,19 @@ class GameService {
       {} as Record<string, number>,
     );
 
+    const highestScore = Math.max(...Object.entries(result).map(([, v]) => v));
+
+    const { winningScore } = (await gameRepository.getGameSettings(gameId)) || {
+      winningScore: Infinity,
+    };
+
+    if (highestScore < winningScore) {
+      return null;
+    }
+
     const [winner] = Object.entries(result)
-      .filter(([, value]) => value >= winningScore)
-      .reduce(
-        ([prevKey, prevValue], [currKey, currValue]) =>
-          prevValue >= currValue ? [prevKey, prevValue] : [currKey, currValue],
-        [null, 0] as [string | null, number],
-      );
+      .filter(([, value]) => value === winningScore)
+      .map(([key]) => key);
 
     return winner;
   }
