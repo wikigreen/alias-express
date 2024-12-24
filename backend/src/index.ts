@@ -5,9 +5,9 @@ import path from "path";
 import { protectedRoomRouter, roomRouter } from "./room/roomRoutes";
 import cookieParser from "cookie-parser";
 import { gameRouter, protectedGameRouter } from "./game/gameRoutes";
-import { exceptionHandlingMiddleware } from "./common/routesExceptionHandler/exceptionHadlingMiddleware";
-import {initSocketIo} from "./socketio";
-import {logMessage} from "./utils";
+import { exceptionHandlingMiddleware } from "./common/routesExceptionHandler";
+import { initSocketIo } from "./socketio";
+import { logMessage } from "./utils";
 
 dotenv.config();
 

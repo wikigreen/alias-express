@@ -1,24 +1,26 @@
 import { Router } from "express";
 import { roomService } from "../room/roomService";
 import { gameService } from "./gameService";
+import { AccessNotAllowed } from "../common/routesExceptionHandler/exceptions/AccessNotAllowed";
+import asyncHandler from "../common/routesExceptionHandler/asyncHandler";
 
 export const gameRouter = Router();
 export const protectedGameRouter = Router();
 
-protectedGameRouter.use(async (req, res, next) => {
-  const roomId = req.body?.roomId;
-  if (!roomId) {
-    res.status(403).send("Access denied. Admins only.");
-    return;
-  }
-  const playerId = req.cookies?.[`room:${roomId}`];
-  const isAdmin = await roomService.isAdmin(roomId, playerId);
-  if (isAdmin) {
+protectedGameRouter.use(
+  asyncHandler(async (req, res, next) => {
+    const roomId = req.body?.roomId;
+    if (!roomId) {
+      throw new AccessNotAllowed("Access denied. Admins only.");
+    }
+    const playerId = req.cookies?.[`room:${roomId}`];
+    const isAdmin = await roomService.isAdmin(roomId, playerId);
+    if (!isAdmin) {
+      throw new AccessNotAllowed("Access denied. Admins only.");
+    }
     next();
-  } else {
-    res.status(403).send("Access denied. Admins only.");
-  }
-});
+  }),
+);
 
 //Create game
 protectedGameRouter.post("/", async (req, res) => {
@@ -55,21 +57,17 @@ gameRouter.post("/team", async (req, res) => {
 });
 
 //Start round
-gameRouter.patch("/round", async (req, res) => {
-  const roomId = req.body?.roomId;
-  const gameId = req.body?.gameId;
-  const playerId = req.cookies?.[`room:${roomId}`];
-  const isStarted = await gameService.startRound(roomId, gameId, playerId);
-  if (!isStarted) {
-    res.status(409);
-    res.send(
-      "You dont have permission to start a round or current state of game does not allow to start the round",
-    );
-    return;
-  }
-  res.status(204);
-  res.send();
-});
+gameRouter.patch(
+  "/round",
+  asyncHandler<unknown, unknown, { roomId: string; gameId: string }>(async (req, res) => {
+    const roomId = req.body?.roomId;
+    const gameId = req.body?.gameId;
+    const playerId = req.cookies?.[`room:${roomId}`];
+    await gameService.startRound(roomId, gameId, playerId);
+    res.status(204);
+    res.send();
+  }),
+);
 
 //Stop round
 gameRouter.patch("/round/stop", async (req, res) => {

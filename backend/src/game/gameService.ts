@@ -6,6 +6,11 @@ import { roomService } from "../room/roomService";
 import { Optional } from "../utils";
 import { roundRepository } from "../round";
 import { Guess } from "../round/types";
+import {
+  ActionNotAllowedError,
+  IncompleteRequestError,
+} from "../common/routesExceptionHandler";
+import { AccessNotAllowed } from "../common/routesExceptionHandler/exceptions/AccessNotAllowed";
 
 class GameService {
   // Create a new game with a unique gameId and copy words from the global list
@@ -143,31 +148,31 @@ class GameService {
     roomId: string,
     gameId: string,
     playerId: string,
-  ): Promise<boolean> {
+  ): Promise<void> {
     if (!roomId || !gameId) {
-      return false;
+      throw new IncompleteRequestError("Room id and game id are required");
     }
     const gameStatus = await this.getGameStatus(gameId);
 
     const { playerId: activePlayerId } = await this.getActivePlayer(gameId);
 
     if (playerId !== activePlayerId) {
-      return false;
+      throw new AccessNotAllowed("Only active player can start a round");
     }
 
     if (gameStatus === "ongoingRound") {
-      return true;
+      return;
     }
 
     const teams = await this.getTeams(gameId);
 
     if (teams.length < 2) {
-      return false;
+      throw new ActionNotAllowedError("Not enough teams to start the round");
     }
 
     const hasEmptyTeam = teams.some((v) => v.players?.length < 1);
     if (hasEmptyTeam) {
-      return false;
+      throw new ActionNotAllowedError("Some teams are empty");
     }
 
     await gameRepository.saveGameMetadata(gameId, {
@@ -180,7 +185,6 @@ class GameService {
         (state?.gameSettings?.roundTime || 60) * 1000,
       );
     });
-    return true;
   }
 
   async finishRound(
