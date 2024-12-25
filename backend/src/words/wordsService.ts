@@ -1,21 +1,29 @@
-import { v4 as uuid } from "uuid";
+import { wordsRepository } from "./wordsRepository";
+import { WordPack } from "./types";
 
 class WordsService {
-  private wordMap = {} as Record<string, string>;
-
   async initWords(gameId: string) {
-    this.wordMap[gameId] = uuid().substring(24);
+    const words = await wordsRepository.getAllWords(WordPack.SIMPLE_UKRAINIAN);
+    const shuffledWords = this.shuffleArray(words);
+    await wordsRepository.saveWordsForGame(gameId, shuffledWords);
   }
 
   async getCurrentWord(gameId: string) {
-    return this.wordMap[gameId];
+    return await wordsRepository.getFirstWord(gameId);
   }
 
   async getCurrentAndNextWords(gameId: string) {
-    const currentWord = this.wordMap[gameId];
-    this.wordMap[gameId] = uuid().substring(24);
-    const nextWord = this.wordMap[gameId];
+    const currentWord = await wordsRepository.getFirstWord(gameId);
+    const nextWord = await wordsRepository.moveLastWordToStartAndGet(gameId);
     return [currentWord, nextWord];
+  }
+
+  private shuffleArray<T>(array: T[]): T[] {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1)); // Generate a random index
+      [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+    }
+    return array;
   }
 }
 

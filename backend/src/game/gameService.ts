@@ -10,6 +10,7 @@ import {
   ActionNotAllowedError,
   IncompleteRequestError,
   AccessNotAllowed,
+  NotFoundError,
 } from "../common/routesExceptionHandler";
 import { wordsService } from "../words";
 
@@ -303,6 +304,10 @@ class GameService {
     const currentRound = await roundRepository.getRoundNumber(gameId);
     const [guessedWord, nextWord] =
       await wordsService.getCurrentAndNextWords(gameId);
+
+    if (!guessedWord || !nextWord) {
+      throw new NotFoundError("Word not found");
+    }
 
     await roundRepository.saveGuess(currentRound, activeTeamId!, gameId, {
       guessed,
