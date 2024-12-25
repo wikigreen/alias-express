@@ -11,6 +11,7 @@ import {
   IncompleteRequestError,
 } from "../common/routesExceptionHandler";
 import { AccessNotAllowed } from "../common/routesExceptionHandler/exceptions/AccessNotAllowed";
+import { wordsService } from "../words";
 
 class GameService {
   // Create a new game with a unique gameId and copy words from the global list
@@ -35,6 +36,7 @@ class GameService {
     await gameRepository.copyWordsToGame(gameId, words);
     await this.addTeamToGame(roomId, gameId, { name: "Team A" });
     await this.addTeamToGame(roomId, gameId, { name: "Team B" });
+    await wordsService.initWords(gameId);
 
     await this.#emitGameState(roomId, gameId);
 
@@ -251,14 +253,9 @@ class GameService {
     return true;
   }
 
-  async registerGuess(
-    roomId: string,
-    gameId: string,
-    playerId: string,
-    guessed: boolean,
-  ): Promise<boolean> {
-    if (!roomId || !gameId) {
-      return false;
+  async getWord(gameId: string, playerId: string): Promise<string> {
+    if (!gameId) {
+      throw new IncompleteRequestError("No game id specified");
     }
     const gameStatus = await this.getGameStatus(gameId);
 
@@ -266,21 +263,49 @@ class GameService {
       !gameStatus ||
       !new Set<GameStatus>(["lastWord", "ongoingRound"]).has(gameStatus)
     ) {
-      return false;
+      throw new ActionNotAllowedError("There is no ongoing round");
+    }
+
+    const { playerId: activePlayerId } = await this.getActivePlayer(gameId);
+
+    if (playerId !== activePlayerId) {
+      throw new AccessNotAllowed("Only active player allowed");
+    }
+
+    return wordsService.getCurrentWord(gameId);
+  }
+
+  async registerGuess(
+    roomId: string,
+    gameId: string,
+    playerId: string,
+    guessed: boolean,
+  ): Promise<string> {
+    if (!roomId || !gameId) {
+      throw new IncompleteRequestError("No game id or room id specified");
+    }
+    const gameStatus = await this.getGameStatus(gameId);
+
+    if (
+      !gameStatus ||
+      !new Set<GameStatus>(["lastWord", "ongoingRound"]).has(gameStatus)
+    ) {
+      throw new ActionNotAllowedError("There is no ongoing round");
     }
 
     const { playerId: activePlayerId, teamId: activeTeamId } =
       await this.getActivePlayer(gameId);
 
     if (playerId !== activePlayerId) {
-      return false;
+      throw new AccessNotAllowed("Only active player allowed");
     }
 
     const currentRound = await roundRepository.getRoundNumber(gameId);
+    const [guessedWord, nextWord] = await wordsService.getCurrentAndNextWords(gameId);
 
     await roundRepository.saveGuess(currentRound, activeTeamId!, gameId, {
       guessed,
-      word: uuid(),
+      word: guessedWord,
       createTime: new Date().getTime(),
     });
 
@@ -294,7 +319,7 @@ class GameService {
       await this.#emitGameState(roomId, gameId);
     }
 
-    return true;
+    return nextWord;
   }
 
   async #endGuessingTime(roomId: string, gameId: string): Promise<void> {

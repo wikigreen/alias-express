@@ -1,19 +1,19 @@
 import { v4 as uuid } from "uuid";
 
 class WordsService {
-  wordMap = {} as Record<string, string>;
+  private wordMap = {} as Record<string, string>;
 
-  initWords(gameId: string) {
-    this.wordMap[gameId] = uuid();
+  async initWords(gameId: string) {
+    this.wordMap[gameId] = uuid().substring(24);
   }
 
-  getCurrentWord(gameId: string) {
+  async getCurrentWord(gameId: string) {
     return this.wordMap[gameId];
   }
 
-  getCurrentAndNextWords(gameId: string) {
+  async getCurrentAndNextWords(gameId: string) {
     const currentWord = this.wordMap[gameId];
-    this.wordMap[gameId] = uuid();
+    this.wordMap[gameId] = uuid().substring(24);
     const nextWord = this.wordMap[gameId];
     return [currentWord, nextWord];
   }

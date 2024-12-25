@@ -89,24 +89,41 @@ gameRouter.patch("/round/stop", async (req, res) => {
 });
 
 //Make guess
-gameRouter.post("/guess", async (req, res) => {
-  const roomId = req.body?.roomId;
-  const gameId = req.body?.gameId;
-  const playerId = req.cookies?.[`room:${roomId}`];
-  const isFinished = await gameService.registerGuess(
-    roomId,
-    gameId,
-    playerId,
-    !!req.body?.guessed,
-  );
-  if (!isFinished) {
-    res.status(409);
-    res.send("You dont have permission to guess");
-    return;
-  }
-  res.status(204);
-  res.send();
-});
+gameRouter.post(
+  "/word",
+  asyncHandler<unknown, unknown, { roomId: string; gameId: string }>(
+    async (req, res) => {
+      const roomId = req.body?.roomId;
+      const gameId = req.body?.gameId;
+      const playerId = req.cookies?.[`room:${roomId}`];
+      const word = await gameService.getWord(gameId, playerId);
+      res.status(200);
+      res.send(word);
+    },
+  ),
+);
+
+//Make guess
+gameRouter.post(
+  "/guess",
+  asyncHandler<
+    unknown,
+    unknown,
+    { roomId: string; gameId: string; guessed: boolean }
+  >(async (req, res) => {
+    const roomId = req.body?.roomId;
+    const gameId = req.body?.gameId;
+    const playerId = req.cookies?.[`room:${roomId}`];
+    const word = await gameService.registerGuess(
+      roomId,
+      gameId,
+      playerId,
+      !!req.body?.guessed,
+    );
+    res.status(200);
+    res.send(word);
+  }),
+);
 
 //Get info about score for game
 gameRouter.post("/info/score/:gameId", async (req, res) => {
