@@ -27,7 +27,7 @@ interface GameFormProps {
 }
 
 const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
-  const { gameState, isActivePlayer, score } = useGameState();
+  const { gameState, isActivePlayer, score, remainingTime } = useGameState();
   const [joinTeam] = useJoinTeamMutation();
   const [startGame] = useStartGameMutation();
   const [startRound] = useStartRoundMutation();
@@ -212,6 +212,9 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         </Typography>
         <Typography>
           Current word: <strong>{isWordFetching ? "Loading..." : word}</strong>
+        </Typography>
+        <Typography>
+          Round remaining time: <strong>{remainingTime}</strong>
         </Typography>
       </CardContent>
 

@@ -183,9 +183,12 @@ class GameService {
     });
 
     this.#emitGameState(roomId, gameId).then((state) => {
+      const roundDuration = state?.gameSettings?.roundTime || 60;
+
+      this.emitCountdown(roomId, roundDuration);
       setTimeout(
         () => this.#endGuessingTime(roomId, gameId),
-        (state?.gameSettings?.roundTime || 60) * 1000,
+        roundDuration * 1000,
       );
     });
   }
@@ -431,6 +434,18 @@ class GameService {
       });
       return state;
     });
+  }
+
+  emitCountdown(roomId: string, seconds: number): void {
+    let count = seconds;
+
+    const intervalId = setInterval(() => {
+      if (count >= 0) {
+        socketio.to(roomId).emit("countdown", count--);
+      } else {
+        clearInterval(intervalId);
+      }
+    }, 1000);
   }
 
   private async nextPlayerToGuess(gameId: string, teamId: string) {
