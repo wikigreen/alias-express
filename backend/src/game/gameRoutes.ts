@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { roomService } from "../room/roomService";
 import { gameService } from "./gameService";
-import { AccessNotAllowed } from "../common/routesExceptionHandler/exceptions/AccessNotAllowed";
+import { AccessNotAllowed } from "../common/routesExceptionHandler";
 import asyncHandler from "../common/routesExceptionHandler/asyncHandler";
 
 export const gameRouter = Router();
@@ -59,14 +59,16 @@ gameRouter.post("/team", async (req, res) => {
 //Start round
 gameRouter.patch(
   "/round",
-  asyncHandler<unknown, unknown, { roomId: string; gameId: string }>(async (req, res) => {
-    const roomId = req.body?.roomId;
-    const gameId = req.body?.gameId;
-    const playerId = req.cookies?.[`room:${roomId}`];
-    await gameService.startRound(roomId, gameId, playerId);
-    res.status(204);
-    res.send();
-  }),
+  asyncHandler<unknown, unknown, { roomId: string; gameId: string }>(
+    async (req, res) => {
+      const roomId = req.body?.roomId;
+      const gameId = req.body?.gameId;
+      const playerId = req.cookies?.[`room:${roomId}`];
+      await gameService.startRound(roomId, gameId, playerId);
+      res.status(204);
+      res.send();
+    },
+  ),
 );
 
 //Stop round

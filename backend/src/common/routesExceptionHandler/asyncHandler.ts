@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 
-// Define the wrapper function
 const asyncHandler = <
   P = object,
   ResBody = unknown,
