@@ -1,6 +1,12 @@
 import { NextFunction, Request, Response } from "express";
-import { EntityAlreadyExistsError, NotFoundError } from "./exceptions";
+import {
+  ActionNotAllowedError,
+  EntityAlreadyExistsError,
+  IncompleteRequestError,
+  NotFoundError,
+} from "./exceptions";
 import status from "statuses";
+import { AccessNotAllowed } from "./exceptions/AccessNotAllowed";
 
 export const exceptionHandlingMiddleware = async (
   err: Error,
@@ -26,6 +32,12 @@ function getErrorMetadata(
         error.message,
         { nickname: (error as EntityAlreadyExistsError).nickname },
       ];
+    case AccessNotAllowed:
+      return [403, error.message];
+    case ActionNotAllowedError:
+      return [409, error.message];
+    case IncompleteRequestError:
+      return [400, error.message];
     case NotFoundError:
       return [status("NotFound"), error.message];
   }

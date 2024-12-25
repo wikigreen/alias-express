@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import GameForm from "./CreateGame/GameForm.tsx";
-import { useGameState } from "../../context/GameContext";
+import { GameStatus, useGameState } from "../../context/GameContext";
 import {
   Box,
   Button,
@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import {
   useFinishRoundMutation,
+  useGetWordQuery,
   useJoinTeamMutation,
   useMakeGuessMutation,
   useStartGameMutation,
@@ -32,6 +33,26 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
   const [startRound] = useStartRoundMutation();
   const [finishRound] = useFinishRoundMutation();
   const [makeGuess] = useMakeGuessMutation();
+  const { data: { word } = {}, isFetching: isWordFetching } = useGetWordQuery(
+    {
+      gameId: gameState?.id,
+      roomId,
+      round: gameState?.currentRound || 0,
+    },
+    {
+      skip:
+        !gameState?.id ||
+        !roomId ||
+        !gameState?.currentRound ||
+        !new Set<GameStatus>(["ongoingRound", "lastWord"]).has(
+          gameState?.gameStatus,
+        ),
+    },
+  );
+
+  useEffect(() => {
+    console.log({ word });
+  }, [word]);
 
   const handleJoinTeam = async (teamId: string, gameId: string) => {
     const gameSettings: JoinTeamRequest = {
@@ -137,7 +158,7 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         Start game
       </Button>
       <Button
-        disabled={!isActivePlayer}
+        disabled={!isActivePlayer && false}
         onClick={() => handleStartRound(gameState?.id)}
       >
         Start round
@@ -188,6 +209,9 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         </Typography>
         <Typography>
           Current round: <strong>{gameState.currentRound}</strong>
+        </Typography>
+        <Typography>
+          Current word: <strong>{isWordFetching ? "Loading..." : word}</strong>
         </Typography>
       </CardContent>
 

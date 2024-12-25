@@ -5,6 +5,16 @@ export const gameApi = createApi({
   reducerPath: "gameApi",
   baseQuery: fetchBaseQuery({ baseUrl: "/api/game" }),
   endpoints: (builder) => ({
+    getWord: builder.query<
+      { word: string },
+      { roomId?: string; gameId?: string; round: number }
+    >({
+      query: (body) => ({
+        url: "word",
+        method: "POST",
+        body,
+      }),
+    }),
     createGame: builder.mutation<void, GameSettings>({
       query: (body) => ({
         url: "",
@@ -41,7 +51,7 @@ export const gameApi = createApi({
       }),
     }),
     makeGuess: builder.mutation<
-      void,
+      { word: string },
       { roomId: string; gameId: string; guessed: boolean }
     >({
       query: (body) => ({
@@ -49,6 +59,30 @@ export const gameApi = createApi({
         method: "POST",
         body,
       }),
+      async onQueryStarted(
+        { gameId, roomId },
+        { dispatch, queryFulfilled, getState },
+      ) {
+        const productIds = gameApi.util.selectCachedArgsForQuery(
+          getState(),
+          "getWord",
+        );
+        queryFulfilled
+          .then(({ data }) => {
+            console.log({ productIds });
+            productIds
+              .filter((p) => p.gameId === gameId && p.roomId === roomId)
+              .forEach((p) => {
+                console.log({ updateQueryData: p, data });
+                dispatch(
+                  gameApi.util.updateQueryData("getWord", p, (prev) => {
+                    Object.assign(prev, data);
+                  }),
+                );
+              });
+          })
+          .catch((e) => console.error(e));
+      },
     }),
   }),
 });
@@ -60,4 +94,5 @@ export const {
   useStartRoundMutation,
   useFinishRoundMutation,
   useMakeGuessMutation,
+  useGetWordQuery,
 } = gameApi;
