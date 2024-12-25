@@ -40,6 +40,7 @@ class WordsRepository {
   async saveWordsForGame(gameId: string, words: string[]) {
     const client = await redisClient;
     client.rPush(`words:gameId:${gameId}`, words);
+    client.expire(`words:gameId:${gameId}`, 60 * 60 * 24);
   }
 
   async getFirstWord(gameId: string) {

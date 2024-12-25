@@ -16,6 +16,7 @@ interface GameStateContextType {
   isActivePlayer: boolean;
   guesses: Guess[];
   score: Record<string, number>;
+  remainingTime: number;
 }
 
 export const GameStateContext = createContext<GameStateContextType>(
@@ -81,6 +82,7 @@ export const GameStateProvider = ({
   const [isActivePlayer, setIsActivePlayer] = useState<boolean>(false);
   const [gameState, setGameState] = useState<AliasGameState | null>(null);
   const [guesses, setGuesses] = useState<Guess[]>([]);
+  const [remainingTime, setRemainingTime] = useState(0);
 
   const gameId = useMemo(
     () => gameState?.id || gameIdFromRequest,
@@ -116,6 +118,10 @@ export const GameStateProvider = ({
         setScore(score);
       });
 
+      newSocket.on("countdown", (remainingTime: number) => {
+        setRemainingTime(remainingTime);
+      });
+
       return () => {
         newSocket.disconnect();
       };
@@ -134,7 +140,15 @@ export const GameStateProvider = ({
 
   return (
     <GameStateContext.Provider
-      value={{ socket, players, gameState, isActivePlayer, guesses, score }}
+      value={{
+        socket,
+        players,
+        gameState,
+        isActivePlayer,
+        guesses,
+        score,
+        remainingTime,
+      }}
     >
       {children}
     </GameStateContext.Provider>
