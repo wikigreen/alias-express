@@ -32,9 +32,6 @@ class GameService {
     await gameRepository.saveGameMetadata(gameId, gameState);
     await roomService.setGameId(roomId, gameId);
 
-    // Copy words from the global 'simpleWords' list to the game's word list
-    const words = await gameRepository.getSimpleWords();
-    await gameRepository.copyWordsToGame(gameId, words);
     await this.addTeamToGame(roomId, gameId, { name: "Team A" });
     await this.addTeamToGame(roomId, gameId, { name: "Team B" });
     await wordsService.initWords(gameId);
@@ -62,10 +59,6 @@ class GameService {
 
     await gameRepository.saveTeam(gameId, team);
     await this.#emitGameState(roomId, gameId);
-  }
-
-  async popNextWord(gameId: string): Promise<string | null> {
-    return await gameRepository.popNextWord(gameId);
   }
 
   async getFullGameState(

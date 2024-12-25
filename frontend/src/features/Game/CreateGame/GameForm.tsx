@@ -60,7 +60,6 @@ const GameForm: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         variant="contained"
         color="primary"
         onClick={handleCreateGame}
-        disabled={!isAdmin || isLoading}
       >
         {isLoading ? "Creating..." : "Create Game"}
       </Button>

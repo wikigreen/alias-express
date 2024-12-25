@@ -1,10 +1,9 @@
-import React, { useEffect } from "react";
+import React from "react";
 import GameForm from "./CreateGame/GameForm.tsx";
 import { GameStatus, useGameState } from "../../context/GameContext";
 import {
   Box,
   Button,
-  Card,
   CardContent,
   Divider,
   Grid,
@@ -49,10 +48,6 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         ),
     },
   );
-
-  useEffect(() => {
-    console.log({ word });
-  }, [word]);
 
   const handleJoinTeam = async (teamId: string, gameId: string) => {
     const gameSettings: JoinTeamRequest = {
@@ -151,35 +146,18 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
       <Typography variant="h4" gutterBottom>
         Game
       </Typography>
-      <Button
-        disabled={!isAdmin}
-        onClick={() => handleStartGame(gameState?.id)}
-      >
-        Start game
-      </Button>
-      <Button
-        disabled={!isActivePlayer && false}
-        onClick={() => handleStartRound(gameState?.id)}
-      >
+      <Button onClick={() => handleStartGame(gameState?.id)}>Start game</Button>
+      <Button onClick={() => handleStartRound(gameState?.id)}>
         Start round
       </Button>
-      <Button
-        disabled={!isActivePlayer}
-        onClick={() => handleFinishRound(gameState?.id)}
-      >
+      <Button onClick={() => handleFinishRound(gameState?.id)}>
         Finish round
       </Button>
       <Divider orientation="vertical" variant="middle" flexItem />
-      <Button
-        disabled={!isActivePlayer}
-        onClick={() => handleMakeGuess(gameState?.id, true)}
-      >
+      <Button onClick={() => handleMakeGuess(gameState?.id, true)}>
         Guess work
       </Button>
-      <Button
-        disabled={!isActivePlayer}
-        onClick={() => handleMakeGuess(gameState?.id, false)}
-      >
+      <Button onClick={() => handleMakeGuess(gameState?.id, false)}>
         Skip word
       </Button>
       <Divider sx={{ marginBottom: 2 }} />
@@ -217,21 +195,6 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
           Round remaining time: <strong>{remainingTime}</strong>
         </Typography>
       </CardContent>
-
-      {/* Game Settings Section */}
-      <Card sx={{ marginBottom: 2 }}>
-        <CardContent>
-          <Typography variant="h6">Game Settings</Typography>
-          <Typography>
-            Winning Score:{" "}
-            <strong>{gameState.gameSettings.winningScore || "Not Set"}</strong>
-          </Typography>
-          <Typography>
-            Round Time:{" "}
-            <strong>{gameState.gameSettings.roundTime || "Not Set"}</strong>
-          </Typography>
-        </CardContent>
-      </Card>
 
       {/* Teams Section */}
       <Typography variant="h6" gutterBottom>

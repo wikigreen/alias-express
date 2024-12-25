@@ -28,33 +28,6 @@ class GameRepository {
     );
   }
 
-  // Fetch the list of words from the 'simpleWords' key
-  async getSimpleWords(): Promise<string[]> {
-    const client = await redisClient;
-    const words = await client.lRange("simpleWords", 0, -1); // Get all words
-    return words || [];
-  }
-
-  // Copy words to the newly created game's word list
-  async copyWordsToGame(gameId: string, words: string[]): Promise<void> {
-    const client = await redisClient;
-    const gameWordsKey = `${this.redisPrefix}${gameId}:words`;
-    for (const word of words) {
-      await client.rPush(gameWordsKey, word); // Push each word to the new game's word list
-    }
-  }
-
-  // Pop a word from the game's word list and set it as the currentWord
-  async popNextWord(gameId: string): Promise<string | null> {
-    const client = await redisClient;
-    const gameWordsKey = `${this.redisPrefix}${gameId}:words`;
-
-    // Pop a word from the word list
-    const nextWord = await client.lPop(gameWordsKey);
-
-    return nextWord || null; // Return the next word or null if the list is empty
-  }
-
   // Fetch the full game state, including current word, teams, etc.
   async getGame(gameId: string): Promise<AliasGameState | null> {
     const client = await redisClient;
