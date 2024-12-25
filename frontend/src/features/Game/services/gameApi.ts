@@ -5,9 +5,12 @@ export const gameApi = createApi({
   reducerPath: "gameApi",
   baseQuery: fetchBaseQuery({ baseUrl: "/api/game" }),
   endpoints: (builder) => ({
-    getWord: builder.query<string, { roomId: string; gameId: string }>({
+    getWord: builder.query<
+      { word: string },
+      { roomId?: string; gameId?: string; round: number }
+    >({
       query: (body) => ({
-        url: "guess",
+        url: "word",
         method: "POST",
         body,
       }),
@@ -48,7 +51,7 @@ export const gameApi = createApi({
       }),
     }),
     makeGuess: builder.mutation<
-      string,
+      { word: string },
       { roomId: string; gameId: string; guessed: boolean }
     >({
       query: (body) => ({
@@ -66,10 +69,16 @@ export const gameApi = createApi({
         );
         queryFulfilled
           .then(({ data }) => {
+            console.log({ productIds });
             productIds
-              .filter((p) => p.gameId === gameId && p.gameId === roomId)
+              .filter((p) => p.gameId === gameId && p.roomId === roomId)
               .forEach((p) => {
-                dispatch(gameApi.util.upsertQueryData("getWord", p, data));
+                console.log({ updateQueryData: p, data });
+                dispatch(
+                  gameApi.util.updateQueryData("getWord", p, (prev) => {
+                    Object.assign(prev, data);
+                  }),
+                );
               });
           })
           .catch((e) => console.error(e));
@@ -85,4 +94,5 @@ export const {
   useStartRoundMutation,
   useFinishRoundMutation,
   useMakeGuessMutation,
+  useGetWordQuery,
 } = gameApi;

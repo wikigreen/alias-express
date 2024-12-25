@@ -50,7 +50,7 @@ export type GameSettings = {
   roundTime: number;
 };
 
-type GameStatus =
+export type GameStatus =
   | "waiting"
   | "ongoing"
   | "paused"

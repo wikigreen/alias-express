@@ -98,7 +98,7 @@ gameRouter.post(
       const playerId = req.cookies?.[`room:${roomId}`];
       const word = await gameService.getWord(gameId, playerId);
       res.status(200);
-      res.send(word);
+      res.send({ word });
     },
   ),
 );
@@ -121,7 +121,7 @@ gameRouter.post(
       !!req.body?.guessed,
     );
     res.status(200);
-    res.send(word);
+    res.send({ word });
   }),
 );
 

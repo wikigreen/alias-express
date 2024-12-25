@@ -9,8 +9,8 @@ import { Guess } from "../round/types";
 import {
   ActionNotAllowedError,
   IncompleteRequestError,
+  AccessNotAllowed,
 } from "../common/routesExceptionHandler";
-import { AccessNotAllowed } from "../common/routesExceptionHandler/exceptions/AccessNotAllowed";
 import { wordsService } from "../words";
 
 class GameService {
@@ -301,7 +301,8 @@ class GameService {
     }
 
     const currentRound = await roundRepository.getRoundNumber(gameId);
-    const [guessedWord, nextWord] = await wordsService.getCurrentAndNextWords(gameId);
+    const [guessedWord, nextWord] =
+      await wordsService.getCurrentAndNextWords(gameId);
 
     await roundRepository.saveGuess(currentRound, activeTeamId!, gameId, {
       guessed,
@@ -317,6 +318,7 @@ class GameService {
         gameStatus: "guessesCorrection",
       });
       await this.#emitGameState(roomId, gameId);
+      return "";
     }
 
     return nextWord;
