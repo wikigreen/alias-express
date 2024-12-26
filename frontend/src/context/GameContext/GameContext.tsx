@@ -129,14 +129,16 @@ export const GameStateProvider = ({
   }, [roomId]);
 
   useEffect(() => {
+    if (gameState?.gameStatus === "ongoing") {
+      setGuesses([]);
+    }
+  }, [gameState?.gameStatus]);
+
+  useEffect(() => {
     if (socket && (gameState?.id || gameId) != null) {
       socket.emit("connectGame");
     }
   }, [socket, gameState?.id, gameId]);
-
-  useEffect(() => {
-    console.log("Guesses", guesses);
-  }, [guesses]);
 
   return (
     <GameStateContext.Provider

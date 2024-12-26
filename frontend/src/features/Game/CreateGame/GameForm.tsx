@@ -49,7 +49,7 @@ const GameForm: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
       />
 
       <TextField
-        label="Round Time (seconds)"
+        label="Guesses Time (seconds)"
         type="number"
         value={roundTime}
         onChange={(e) => setRoundTime(Number(e.target.value))}

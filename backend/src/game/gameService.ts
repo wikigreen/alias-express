@@ -32,8 +32,8 @@ class GameService {
     await gameRepository.saveGameMetadata(gameId, gameState);
     await roomService.setGameId(roomId, gameId);
 
-    await this.addTeamToGame(roomId, gameId, { name: "Team A" });
-    await this.addTeamToGame(roomId, gameId, { name: "Team B" });
+    await this.addTeamToGame(roomId, gameId, { name: "Guesses A" });
+    await this.addTeamToGame(roomId, gameId, { name: "Guesses B" });
     await wordsService.initWords(gameId);
 
     await this.#emitGameState(roomId, gameId);

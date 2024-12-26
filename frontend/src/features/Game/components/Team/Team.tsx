@@ -1,12 +1,23 @@
 import {
-  Button,
   Card,
-  CardActions,
   CardContent,
-  Grid,
+  IconButton,
   Typography,
+  Chip,
+  Button,
+  Collapse,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Box,
+  CardActions,
 } from "@mui/material";
-import { FC, PropsWithChildren } from "react";
+import { FC } from "react";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import LeaderboardOutlinedIcon from "@mui/icons-material/LeaderboardOutlined";
+import PersonIcon from "@mui/icons-material/Person";
+import clsx from "clsx";
 
 interface TeamProps {
   id?: string;
@@ -15,39 +26,73 @@ interface TeamProps {
   describer?: string;
   players?: string[];
   onJoin?: () => void;
+  onArrowClick?: () => void;
+  expanded: boolean;
 }
 
-export const Team: FC<PropsWithChildren<TeamProps>> = ({
-  children,
+export const Team: FC<TeamProps> = ({
   name = "None",
   score = 0,
   players = [],
   onJoin,
-}) => (
-  <Grid item xs={12} sm={6}>
-    <Card>
-      <CardContent>
-        <Typography variant="subtitle1">Name: {name}</Typography>
-        <Typography>
-          Score: <strong>{score}</strong>
+  expanded,
+  onArrowClick,
+}) => {
+  return (
+    <Card sx={{ width: "100%" }}>
+      <CardContent
+        style={{ display: "flex", alignItems: "center", padding: 8 }}
+      >
+        <IconButton
+          onClick={onArrowClick}
+          className={clsx({ expanded: expanded })}
+          style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
+        >
+          <ExpandMoreIcon />
+        </IconButton>
+
+        <Typography variant="h6" style={{ marginLeft: 8, flex: 1 }}>
+          {name}
         </Typography>
-        <Typography>Players:</Typography>
-        {players.length > 0 ? (
-          <ul>
-            {players.map((player) => (
-              <li key={player}>{player}</li>
-            ))}
-          </ul>
-        ) : (
-          <Typography>No players</Typography>
-        )}
+
+        <Box display="flex" gap={1}>
+          <Chip
+            icon={<PersonIcon />}
+            label={players.length}
+            variant="outlined"
+          />
+          <Chip
+            icon={<LeaderboardOutlinedIcon />}
+            label={score}
+            variant="outlined"
+          />
+        </Box>
       </CardContent>
-      {onJoin ? (
+
+      <Collapse in={expanded} timeout="auto" unmountOnExit>
+        <CardContent>
+          <List>
+            {players.map((member) => (
+              <ListItem key={member}>
+                <ListItemIcon>
+                  <PersonIcon />
+                </ListItemIcon>
+                <ListItemText primary={member} />
+              </ListItem>
+            ))}
+          </List>
+        </CardContent>
         <CardActions>
-          <Button onClick={onJoin}>Join</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            style={{ marginLeft: 16 }}
+            onClick={onJoin}
+          >
+            Join
+          </Button>
         </CardActions>
-      ) : null}
+      </Collapse>
     </Card>
-    {children}
-  </Grid>
-);
+  );
+};
