@@ -3,7 +3,7 @@ import { v4 as uuid } from "uuid";
 import { gameRepository } from "./gameRespository";
 import { socketio } from "../index";
 import { roomService } from "../room/roomService";
-import { Optional } from "../utils";
+import { debugMessage, Optional } from "../utils";
 import { roundRepository } from "../round";
 import { Guess } from "../round/types";
 import {
@@ -13,6 +13,7 @@ import {
   NotFoundError,
 } from "../common/routesExceptionHandler";
 import { wordsService } from "../words";
+import { roomRepository } from "../room/roomRepository";
 
 class GameService {
   // Create a new game with a unique gameId and copy words from the global list
@@ -32,8 +33,8 @@ class GameService {
     await gameRepository.saveGameMetadata(gameId, gameState);
     await roomService.setGameId(roomId, gameId);
 
-    await this.addTeamToGame(roomId, gameId, { name: "Guesses A" });
-    await this.addTeamToGame(roomId, gameId, { name: "Guesses B" });
+    await this.addTeamToGame(roomId, gameId, { name: "Team A" });
+    await this.addTeamToGame(roomId, gameId, { name: "Team B" });
     await wordsService.initWords(gameId);
 
     await this.#emitGameState(roomId, gameId);
@@ -413,8 +414,27 @@ class GameService {
     roomId: string,
     gameId: string,
   ): Promise<AliasGameState | null> {
+    const players = (await roomRepository.getPlayers(roomId)).reduce(
+      (previousValue, currentValue) => {
+        return { ...previousValue, [currentValue.id]: currentValue.nickname };
+      },
+      {} as Record<string, string>,
+    );
+
     return this.getFullGameState(gameId).then((state) => {
-      socketio.to(roomId).emit("gameState", state);
+      const safeState = state
+        ? {
+            ...state,
+            currentPlayer: players[state.currentPlayer || ""],
+            teams: (state.teams || []).map((team) =>
+              Object.assign(team, {
+                players: team.players.map((playerId) => players[playerId]),
+              }),
+            ),
+          }
+        : null;
+
+      socketio.to(roomId).emit("gameState", safeState);
       roomService.getPlayers(roomId, false).then((players) => {
         players
           .map((p) => p.id)
@@ -425,7 +445,7 @@ class GameService {
               .emit("isActivePlayer", state?.currentPlayer === pId);
           });
       });
-      return state;
+      return safeState;
     });
   }
 
@@ -450,6 +470,7 @@ class GameService {
   }
 
   private async getWinner(gameId: string) {
+    debugMessage("We are here ");
     const allGuesses = await roundRepository.getAllRoundsGrouped(gameId);
     const flatGuesses: (Guess & { teamId: string })[] = Object.entries(
       allGuesses,
@@ -477,9 +498,12 @@ class GameService {
       return null;
     }
 
+    debugMessage({ result, winningScore });
+
     const [winner, ...contenders] = Object.entries(result)
-      .filter(([, value]) => value === winningScore)
+      .filter(([, value]) => value === highestScore)
       .map(([key]) => key);
+    debugMessage({ winner, contenders });
 
     return contenders.length < 1 ? winner : null;
   }

@@ -23,7 +23,6 @@ export const GameInfo: FC<GameInfoProps> = ({
     <Card sx={{ width: "100%" }}>
       <CardContent>
         <Stack spacing={2}>
-          {/* Current Team */}
           <Stack direction="row" spacing={1} alignItems="center">
             <Group color="primary" />
             <Typography variant="h6">

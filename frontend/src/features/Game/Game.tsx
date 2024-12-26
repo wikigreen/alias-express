@@ -25,6 +25,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { Round } from "./components/Round";
 import { Guesses } from "./components/Guesses";
 import { GameInfo } from "./components/GameInfo";
+import { TeamsScore } from "./components/TeamsScore";
 
 interface GameFormProps {
   roomId: string;
@@ -173,19 +174,30 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         <Typography variant="h4" gutterBottom>
           Winner is {name}
         </Typography>
+        {gameState.teams
+          .sort(({ id: idA }, { id: idB }) => score[idB] - score[idA])
+          .map((team) => (
+            <TeamsScore key={team.id} name={team.name} score={score[team.id]} />
+          ))}
       </Box>
     );
   }
 
   return (
-    <Box>
-      <IconButton aria-label="menu" size="large" onClick={toggleDrawer}>
+    <Box display="flex" flexDirection="column" gap={2}>
+      <IconButton
+        aria-label="menu"
+        size="large"
+        onClick={toggleDrawer}
+        sx={{ justifyContent: "flex-start" }}
+      >
         <MenuIcon fontSize="inherit" />
       </IconButton>
       <Drawer open={open} onClose={() => setOpen(false)}>
         <Box
           sx={{
             width: "80vw",
+            maxWidth: "500px",
             padding: 2,
             display: "flex",
             flexDirection: "column",
@@ -232,6 +244,11 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         scoreToWin={gameState.gameSettings.winningScore}
         teamScore={score[gameState.currentTeam || ""]}
       />
+      {gameState?.gameStatus === "ongoing"
+        ? gameState.teams.map((team) => (
+            <TeamsScore key={team.id} name={team.name} score={score[team.id]} />
+          ))
+        : null}
       {isActivePlayer ? (
         <Round
           status={gameState?.gameStatus}
