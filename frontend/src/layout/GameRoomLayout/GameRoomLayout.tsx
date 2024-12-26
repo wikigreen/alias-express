@@ -60,8 +60,10 @@ export const GameRoomLayout: React.FC = () => {
 
   return (
     <GameStateProvider roomId={roomId} gameId={data?.currentGameId}>
-      <PlayersList />
-      <Game roomId={roomId!} isAdmin={data?.isAdmin} />
+      <Box sx={{ maxWidth: "700px", margin: "auto" }}>
+        <PlayersList />
+        <Game roomId={roomId!} isAdmin={data?.isAdmin} />
+      </Box>
     </GameStateProvider>
   );
 };

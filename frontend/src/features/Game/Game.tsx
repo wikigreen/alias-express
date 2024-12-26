@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import GameForm from "./CreateGame/GameForm.tsx";
 import { GameStatus, useGameState } from "../../context/GameContext";
 import {
   Box,
   Button,
+  Card,
+  CardActions,
   CardContent,
-  Divider,
-  Grid,
+  Drawer,
+  IconButton,
   Typography,
 } from "@mui/material";
 import {
@@ -19,6 +21,11 @@ import {
 } from "./services";
 import { JoinTeamRequest } from "./types";
 import { Team } from "./components";
+import MenuIcon from "@mui/icons-material/Menu";
+import { Round } from "./components/Round";
+import { Guesses } from "./components/Guesses";
+import { GameInfo } from "./components/GameInfo";
+import { TeamsScore } from "./components/TeamsScore";
 
 interface GameFormProps {
   roomId: string;
@@ -26,13 +33,17 @@ interface GameFormProps {
 }
 
 const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
-  const { gameState, isActivePlayer, score, remainingTime } = useGameState();
+  const [open, setOpen] = useState(false);
+  const [expandedTeam, setExpandedTeam] = useState<string>();
+
+  const { gameState, isActivePlayer, score, remainingTime, guesses } =
+    useGameState();
   const [joinTeam] = useJoinTeamMutation();
   const [startGame] = useStartGameMutation();
   const [startRound] = useStartRoundMutation();
   const [finishRound] = useFinishRoundMutation();
   const [makeGuess] = useMakeGuessMutation();
-  const { data: { word } = {}, isFetching: isWordFetching } = useGetWordQuery(
+  const { data: { word } = {} } = useGetWordQuery(
     {
       gameId: gameState?.id,
       roomId,
@@ -48,6 +59,12 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         ),
     },
   );
+
+  const currentTeamName = useMemo(() => {
+    return gameState?.teams
+      .filter(({ id }) => gameState?.currentTeam === id)
+      .map(({ name }) => name)?.[0];
+  }, [gameState?.teams, gameState?.currentTeam]);
 
   const handleJoinTeam = async (teamId: string, gameId: string) => {
     const gameSettings: JoinTeamRequest = {
@@ -116,103 +133,133 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
     }
   };
 
+  const toggleDrawer = useCallback(() => {
+    setOpen((prev: boolean) => !prev);
+  }, [setOpen]);
+
+  const waiting = useMemo(() => {
+    if (gameState?.gameStatus !== "waiting") {
+      return null;
+    }
+
+    return (
+      <Card sx={{ padding: 2 }}>
+        <CardContent sx={{ display: "flex", justifyContent: "center" }}>
+          <Typography variant="h6">You are not in the team yet</Typography>
+        </CardContent>
+        <CardActions sx={{ display: "flex", justifyContent: "center" }}>
+          <Button
+            variant="contained"
+            color="primary"
+            style={{ marginLeft: 16 }}
+            onClick={toggleDrawer}
+          >
+            Join team
+          </Button>
+        </CardActions>
+      </Card>
+    );
+  }, [gameState?.gameStatus]);
+
   if (!gameState) {
     return <GameForm isAdmin={isAdmin} roomId={roomId} />;
   }
 
   if (gameState.gameStatus === "completed") {
-    const { id, name, players, describer } =
+    const { name } =
       gameState.teams?.filter(({ id }) => gameState.winnerTeamId === id)?.[0] ||
       {};
     return (
       <Box sx={{ padding: 4 }}>
         <Typography variant="h4" gutterBottom>
-          Winner is
+          Winner is {name}
         </Typography>
-
-        <Team
-          name={name}
-          id={id}
-          score={score[id]}
-          players={players}
-          describer={describer}
-        />
+        {gameState.teams
+          .sort(({ id: idA }, { id: idB }) => score[idB] - score[idA])
+          .map((team) => (
+            <TeamsScore key={team.id} name={team.name} score={score[team.id]} />
+          ))}
       </Box>
     );
   }
 
   return (
-    <Box sx={{ padding: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Game
-      </Typography>
-      <Button onClick={() => handleStartGame(gameState?.id)}>Start game</Button>
-      <Button onClick={() => handleStartRound(gameState?.id)}>
-        Start round
-      </Button>
-      <Button onClick={() => handleFinishRound(gameState?.id)}>
-        Finish round
-      </Button>
-      <Divider orientation="vertical" variant="middle" flexItem />
-      <Button onClick={() => handleMakeGuess(gameState?.id, true)}>
-        Guess work
-      </Button>
-      <Button onClick={() => handleMakeGuess(gameState?.id, false)}>
-        Skip word
-      </Button>
-      <Divider sx={{ marginBottom: 2 }} />
-
-      {/* Game Status Section */}
-      <CardContent>
-        <Typography variant="h6">Game Status</Typography>
-        <Typography>
-          ID: <strong>{gameState.id}</strong>
-        </Typography>
-        <Typography>
-          Status: <strong>{gameState.gameStatus}</strong>
-        </Typography>
-        <Typography>
-          Current Word: <strong>{gameState.currentWord || "None"}</strong>
-        </Typography>
-        <Typography>
-          Current Active Team:
-          <strong>{gameState.currentTeam || "None"}</strong>
-        </Typography>
-        <Typography>
-          Is current player active:{" "}
-          <strong>{isActivePlayer ? "Active" : "Not active"}</strong>
-        </Typography>
-        <Typography>
-          Remaining Time: <strong>{gameState.remainingTime} seconds</strong>
-        </Typography>
-        <Typography>
-          Current round: <strong>{gameState.currentRound}</strong>
-        </Typography>
-        <Typography>
-          Current word: <strong>{isWordFetching ? "Loading..." : word}</strong>
-        </Typography>
-        <Typography>
-          Round remaining time: <strong>{remainingTime}</strong>
-        </Typography>
-      </CardContent>
-
-      {/* Teams Section */}
-      <Typography variant="h6" gutterBottom>
-        Teams
-      </Typography>
-      <Grid container spacing={2}>
-        {gameState.teams.map((team) => (
-          <Team
-            key={team.id}
-            name={team.name}
-            id={team.id}
-            score={score[team.id]}
-            players={team.players}
-            describer={team.describer}
-            onJoin={() => handleJoinTeam(team.id, gameState?.id)}
-          />
-        ))}
-      </Grid>
+    <Box display="flex" flexDirection="column" gap={2}>
+      <IconButton
+        aria-label="menu"
+        size="large"
+        onClick={toggleDrawer}
+        sx={{ justifyContent: "flex-start" }}
+      >
+        <MenuIcon fontSize="inherit" />
+      </IconButton>
+      <Drawer open={open} onClose={() => setOpen(false)}>
+        <Box
+          sx={{
+            width: "80vw",
+            maxWidth: "500px",
+            padding: 2,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
+          {isAdmin ? (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => handleStartGame(gameState?.id)}
+            >
+              Start game
+            </Button>
+          ) : null}
+          {gameState.teams.map((team) => (
+            <Team
+              expanded={team.id === expandedTeam}
+              onArrowClick={() =>
+                setExpandedTeam((prev) => {
+                  if (prev === team.id) {
+                    return "";
+                  }
+                  return team.id;
+                })
+              }
+              key={team.id}
+              name={team.name}
+              id={team.id}
+              score={score[team.id]}
+              players={team.players}
+              describer={team.describer}
+              onJoin={() => handleJoinTeam(team.id, gameState?.id)}
+            />
+          ))}
+        </Box>
+      </Drawer>
+      {waiting}
+      <GameInfo
+        currentRound={gameState?.currentRound}
+        currentTeam={currentTeamName || "No team yet"}
+        playerGuessing={gameState.currentPlayer || "No player yet"}
+        remainingTime={remainingTime?.toString() || ""}
+        scoreToWin={gameState.gameSettings.winningScore}
+        teamScore={score[gameState.currentTeam || ""]}
+      />
+      {gameState?.gameStatus === "ongoing"
+        ? gameState.teams.map((team) => (
+            <TeamsScore key={team.id} name={team.name} score={score[team.id]} />
+          ))
+        : null}
+      {isActivePlayer ? (
+        <Round
+          status={gameState?.gameStatus}
+          onFinishRound={() => handleFinishRound(gameState?.id)}
+          onGuess={() => handleMakeGuess(gameState?.id, true)}
+          onSkip={() => handleMakeGuess(gameState?.id, false)}
+          onStartRound={() => handleStartRound(gameState?.id)}
+          currentWord={word}
+        />
+      ) : null}
+      <Guesses guesses={guesses} />
     </Box>
   );
 };
