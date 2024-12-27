@@ -204,6 +204,10 @@ class GameService {
       return false;
     }
 
+    if (!activeTeamId) {
+      return false;
+    }
+
     if (gameStatus === "ongoing") {
       return true;
     }
@@ -212,23 +216,7 @@ class GameService {
       gameStatus: "ongoing",
     });
 
-    const nextPlayerToGuess = await this.nextPlayerToGuess(
-      gameId,
-      activeTeamId!,
-    );
-    await roundRepository.addPlayerToRoundFinishers(
-      activeTeamId!,
-      activePlayerId,
-    );
-    const nextPlayerInRoundFinishers =
-      await roundRepository.isPlayerInRoundFinishers(
-        activeTeamId!,
-        nextPlayerToGuess!,
-      );
-    if (nextPlayerInRoundFinishers) {
-      await roundRepository.addTeamToRoundFinishers(gameId, activeTeamId!);
-      await roundRepository.clearRoundFinishersPlayers(activeTeamId!);
-    }
+    await gameRepository.moveLastPlayerToBeginningAndGet(gameId, activeTeamId);
     const nextTeamToGuess = await this.nextTeamToGuess(gameId);
     const roundFinished = await roundRepository.isTeamInRoundFinishers(
       gameId,
@@ -245,6 +233,8 @@ class GameService {
           winnerTeamId: winner,
         });
       }
+    } else {
+      await roundRepository.addTeamToRoundFinishers(gameId, activeTeamId);
     }
 
     await this.#emitGameState(roomId, gameId);
