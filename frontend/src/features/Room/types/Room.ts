@@ -11,6 +11,7 @@ export interface Room {
 
 export interface GetRoomResponse extends Room {
   playerId: string;
+  nickname: string;
   currentGameId: string;
   isAdmin: boolean;
 }

@@ -29,12 +29,13 @@ import { TeamsScore } from "./components/TeamsScore";
 
 interface GameFormProps {
   roomId: string;
+  nickname: string;
   isAdmin: boolean;
 }
 
-const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
+const Game: React.FC<GameFormProps> = ({ roomId, isAdmin, nickname }) => {
   const [open, setOpen] = useState(false);
-  const [expandedTeam, setExpandedTeam] = useState<string>();
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
 
   const { gameState, isActivePlayer, score, remainingTime, guesses } =
     useGameState();
@@ -65,6 +66,14 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
       .filter(({ id }) => gameState?.currentTeam === id)
       .map(({ name }) => name)?.[0];
   }, [gameState?.teams, gameState?.currentTeam]);
+
+  const playerJoinedTeam = useMemo(
+    () =>
+      gameState?.teams
+        .flatMap((team) => team.players)
+        .some((player) => player === nickname),
+    [gameState?.teams, nickname],
+  );
 
   const handleJoinTeam = async (teamId: string, gameId: string) => {
     const gameSettings: JoinTeamRequest = {
@@ -138,7 +147,7 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
   }, [setOpen]);
 
   const waiting = useMemo(() => {
-    if (gameState?.gameStatus !== "waiting") {
+    if (gameState?.gameStatus !== "waiting" || playerJoinedTeam) {
       return null;
     }
 
@@ -152,14 +161,17 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
             variant="contained"
             color="primary"
             style={{ marginLeft: 16 }}
-            onClick={toggleDrawer}
+            onClick={() => {
+              toggleDrawer();
+              setExpandedTeams(new Set(gameState?.teams.map(({ id }) => id)));
+            }}
           >
             Join team
           </Button>
         </CardActions>
       </Card>
     );
-  }, [gameState?.gameStatus]);
+  }, [gameState?.gameStatus, playerJoinedTeam, gameState?.teams]);
 
   if (!gameState) {
     return <GameForm isAdmin={isAdmin} roomId={roomId} />;
@@ -193,7 +205,13 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
       >
         <MenuIcon fontSize="inherit" />
       </IconButton>
-      <Drawer open={open} onClose={() => setOpen(false)}>
+      <Drawer
+        open={open}
+        onClose={() => {
+          setOpen(false);
+          setExpandedTeams(new Set());
+        }}
+      >
         <Box
           sx={{
             width: "80vw",
@@ -215,13 +233,13 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
           ) : null}
           {gameState.teams.map((team) => (
             <Team
-              expanded={team.id === expandedTeam}
+              expanded={expandedTeams.has(team.id)}
               onArrowClick={() =>
-                setExpandedTeam((prev) => {
-                  if (prev === team.id) {
-                    return "";
+                setExpandedTeams((prev) => {
+                  if (prev.has(team.id)) {
+                    return new Set([...prev].filter((id) => id !== team.id));
                   }
-                  return team.id;
+                  return new Set<string>([...prev, team.id]);
                 })
               }
               key={team.id}
