@@ -26,6 +26,7 @@ import { Round } from "./components/Round";
 import { Guesses } from "./components/Guesses";
 import { GameInfo } from "./components/GameInfo";
 import { TeamsScore } from "./components/TeamsScore";
+import CopyableField from "../../components/CopyableField /CopyableField.tsx";
 
 interface GameFormProps {
   roomId: string;
@@ -222,6 +223,9 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin, nickname }) => {
             gap: 2,
           }}
         >
+          <CopyableField
+            valueToCopy={window.location.href.replace(/^https?:\/\//, "")}
+          />
           {isAdmin ? (
             <Button
               variant="contained"

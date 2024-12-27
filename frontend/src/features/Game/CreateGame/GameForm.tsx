@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { TextField, Button, Box, Typography } from "@mui/material";
+import { TextField, Button, Box, Typography, Divider } from "@mui/material";
 import { useCreateGameMutation } from "../services";
 import { GameSettings } from "../types";
+import CopyableField from "../../../components/CopyableField /CopyableField.tsx";
 
 interface GameFormProps {
   roomId: string;
@@ -60,9 +61,15 @@ const GameForm: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
         variant="contained"
         color="primary"
         onClick={handleCreateGame}
+        disabled={!isAdmin}
       >
         {isLoading ? "Creating..." : "Create Game"}
       </Button>
+
+      <Divider />
+      <CopyableField
+        valueToCopy={window.location.href.replace(/^https?:\/\//, "")}
+      />
     </Box>
   );
 };
