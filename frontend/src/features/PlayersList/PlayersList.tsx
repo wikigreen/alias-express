@@ -91,7 +91,7 @@ export const PlayersList: React.FC = () => {
               }}
             >
               <Typography variant="h6">
-                Invite friends using this the link!
+                Invite friends using the link!
               </Typography>
               <CopyableField
                 valueToCopy={window.location.href.replace(/^https?:\/\//, "")}
