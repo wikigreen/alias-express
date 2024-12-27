@@ -1,19 +1,31 @@
-import React from "react";
-import { Badge, Box, Button, Chip, Popper } from "@mui/material";
+import React, { useState } from "react";
+import {
+  Backdrop,
+  Badge,
+  Box,
+  Button,
+  Card,
+  CardActions,
+  Chip,
+  IconButton,
+  Snackbar,
+  Typography,
+} from "@mui/material";
 import {
   AdminPanelSettings as AdminPanelSettingsIcon,
   AccountCircle as AccountCircleIcon,
 } from "@mui/icons-material";
 import { useGameState } from "../../context/GameContext";
 import { Player } from "../../context/GameContext/types";
+import CloseIcon from "@mui/icons-material/Close";
+import CopyableField from "../../components/CopyableField /CopyableField.tsx";
 
 export const PlayersList: React.FC = () => {
   const { players } = useGameState();
+  const [open, setOpen] = useState(false);
 
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(anchorEl ? null : event.currentTarget);
+  const handleClick = () => {
+    setOpen((prev) => !prev);
   };
 
   const renderPlayer: (player: Player) => React.ReactNode = ({
@@ -30,8 +42,6 @@ export const PlayersList: React.FC = () => {
     />
   );
 
-  const open = Boolean(anchorEl);
-
   return (
     <>
       <Badge badgeContent={players?.length || 0} color="success">
@@ -39,36 +49,57 @@ export const PlayersList: React.FC = () => {
           Players
         </Button>
       </Badge>
-      <Popper
+      <Backdrop
+        sx={(theme) => ({ color: "#fff", zIndex: theme.zIndex.snackbar + 1 })}
         open={open}
-        anchorEl={anchorEl}
-        sx={{
-          backgroundColor: "white",
-          height: 20,
-          width: "fit-content",
-          minWidth: 200,
-          maxWidth: 450,
-          minHeight: 100,
-          borderRadius: 4,
-          padding: 1,
-          boxShadow: "3px 2px 5px #b0b0b0",
-        }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            gap: 1,
-            flexWrap: "wrap",
+        <Snackbar
+          open={open}
+          onClose={() => setOpen(false)}
+          anchorOrigin={{
+            vertical: "top",
+            horizontal: "center",
           }}
         >
-          {[
-            ...(players || []).sort((a, b) => {
-              if (a.online === b.online) return 0;
-              return -a.online;
-            }),
-          ].map(renderPlayer)}
-        </Box>
-      </Popper>
+          <Card sx={{ padding: "12px" }}>
+            <CardActions sx={{ justifyContent: "space-between" }}>
+              <Typography variant="h6">Players</Typography>
+              <IconButton onClick={() => setOpen(false)}>
+                <CloseIcon />
+              </IconButton>
+            </CardActions>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                flexWrap: "wrap",
+                padding: 1,
+              }}
+            >
+              {[
+                ...(players || []).sort((a, b) => {
+                  if (a.online === b.online) return 0;
+                  return -a.online;
+                }),
+              ].map(renderPlayer)}
+            </Box>
+            <CardActions
+              sx={{
+                justifyContent: "space-between",
+                flexDirection: "column",
+                marginTop: "16px",
+              }}
+            >
+              <Typography variant="h6">
+                Invite players using this link!
+              </Typography>
+              <CopyableField
+                valueToCopy={window.location.href.replace(/^https?:\/\//, "")}
+              />
+            </CardActions>
+          </Card>
+        </Snackbar>
+      </Backdrop>
     </>
   );
 };
