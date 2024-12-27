@@ -6,7 +6,6 @@ import { v4 as uuid } from "uuid";
 class RoundRepository {
   private readonly redisPrefix = "round:";
   private readonly redisGamePrefix = "game:";
-  private readonly roundFinishersPlayers = "roundFinishersPlayers";
   private readonly roundFinishersTeams = "roundFinishersTeams";
 
   async saveGuess(
@@ -134,21 +133,6 @@ class RoundRepository {
     );
   }
 
-  // Add a player to the set of round finishers
-  async addPlayerToRoundFinishers(teamId: string, playerId: string) {
-    const client = await redisClient;
-    await client.sAdd(`${this.roundFinishersPlayers}:${teamId}`, playerId);
-  }
-
-  // Check if a player is in the set of round finishers
-  async isPlayerInRoundFinishers(teamId: string, playerId: string) {
-    const client = await redisClient;
-    return await client.sIsMember(
-      `${this.roundFinishersPlayers}:${teamId}`,
-      playerId,
-    );
-  }
-
   // Add a team to the set of round finishers
   async addTeamToRoundFinishers(gameId: string, teamId: string) {
     const client = await redisClient;
@@ -162,12 +146,6 @@ class RoundRepository {
       `${this.roundFinishersTeams}:${gameId}`,
       teamId,
     );
-  }
-
-  // Clear the set of round finishers for players
-  async clearRoundFinishersPlayers(teamId: string) {
-    const client = await redisClient;
-    await client.del(`${this.roundFinishersPlayers}:${teamId}`);
   }
 
   // Clear the set of round finishers for teams

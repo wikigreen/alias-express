@@ -451,10 +451,6 @@ class GameService {
     }, 1000);
   }
 
-  private async nextPlayerToGuess(gameId: string, teamId: string) {
-    return gameRepository.moveLastPlayerToBeginningAndGet(gameId, teamId);
-  }
-
   private async nextTeamToGuess(gameId: string) {
     return gameRepository.moveLastTeamToBeginningAndGet(gameId);
   }
