@@ -76,6 +76,14 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin, nickname }) => {
     [gameState?.teams, nickname],
   );
 
+  const currentRoundScore = useMemo(
+    () =>
+      guesses
+        ?.map((guess) => (guess.guessed ? 1 : -1))
+        .reduce((prev, curr) => prev + curr, 0),
+    [guesses],
+  );
+
   const handleJoinTeam = async (teamId: string, gameId: string) => {
     const gameSettings: JoinTeamRequest = {
       roomId,
@@ -265,6 +273,7 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin, nickname }) => {
         remainingTime={remainingTime?.toString() || ""}
         scoreToWin={gameState.gameSettings.winningScore}
         teamScore={score[gameState.currentTeam || ""]}
+        roundScore={currentRoundScore}
       />
       {gameState?.gameStatus === "ongoing"
         ? gameState.teams.map((team) => (

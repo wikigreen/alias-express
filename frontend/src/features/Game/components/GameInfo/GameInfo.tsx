@@ -9,6 +9,7 @@ interface GameInfoProps {
   currentRound: number;
   scoreToWin: number;
   remainingTime: string; // Format as "mm:ss" or similar
+  roundScore: number;
 }
 
 export const GameInfo: FC<GameInfoProps> = ({
@@ -18,6 +19,7 @@ export const GameInfo: FC<GameInfoProps> = ({
   currentRound,
   scoreToWin,
   remainingTime,
+  roundScore,
 }) => {
   return (
     <Card sx={{ width: "100%" }}>
@@ -60,6 +62,9 @@ export const GameInfo: FC<GameInfoProps> = ({
             <Typography variant="body1">
               Team Score: <strong>{teamScore}</strong>
             </Typography>
+            {roundScore != null ? (
+              <Typography variant="body1">{`(${roundScore > 0 ? "+" : ""}${roundScore})`}</Typography>
+            ) : null}
           </Stack>
 
           {/* Remaining Time */}
