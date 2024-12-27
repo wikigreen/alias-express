@@ -61,7 +61,7 @@ export const PlayersList: React.FC = () => {
             horizontal: "center",
           }}
         >
-          <Card sx={{ padding: "12px" }}>
+          <Card sx={{ padding: "12px", maxWidth: "500px" }}>
             <CardActions sx={{ justifyContent: "space-between" }}>
               <Typography variant="h6">Players</Typography>
               <IconButton onClick={() => setOpen(false)}>
@@ -91,7 +91,7 @@ export const PlayersList: React.FC = () => {
               }}
             >
               <Typography variant="h6">
-                Invite players using this link!
+                Invite friends using this the link!
               </Typography>
               <CopyableField
                 valueToCopy={window.location.href.replace(/^https?:\/\//, "")}
