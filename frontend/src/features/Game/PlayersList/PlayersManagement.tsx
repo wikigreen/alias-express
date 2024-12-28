@@ -15,11 +15,11 @@ import {
   AdminPanelSettings as AdminPanelSettingsIcon,
   AccountCircle as AccountCircleIcon,
 } from "@mui/icons-material";
-import { useGameState } from "../../../context/GameContext";
+import { useGameState } from "@/context/GameContext";
 import { Player } from "../../../context/GameContext/types";
 import CloseIcon from "@mui/icons-material/Close";
-import CopyableField from "../../../components/CopyableField /CopyableField.tsx";
 import { useClearTeamsMutation, useRandomizeTeamsMutation } from "../services";
+import CopyableField from "@/components/CopyableField /CopyableField";
 
 interface PlayersManagementProps {
   isAdmin?: boolean;
@@ -30,8 +30,7 @@ export const PlayersManagement: React.FC<PlayersManagementProps> = ({
   isAdmin = false,
   roomId,
 }) => {
-  const { gameState } = useGameState();
-  const { players } = useGameState();
+  const { gameState, players } = useGameState();
   const [open, setOpen] = useState(false);
   const [randomizeTeams] = useRandomizeTeamsMutation();
   const [clearTeams] = useClearTeamsMutation();
