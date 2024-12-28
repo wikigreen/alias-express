@@ -36,6 +36,20 @@ export const gameApi = createApi({
         body,
       }),
     }),
+    randomizeTeams: builder.mutation<void, { roomId: string; gameId: string }>({
+      query: (body) => ({
+        url: "randomizeTeams",
+        method: "POST",
+        body,
+      }),
+    }),
+    clearTeams: builder.mutation<void, { roomId: string; gameId: string }>({
+      query: (body) => ({
+        url: "clearTeams",
+        method: "POST",
+        body,
+      }),
+    }),
     startRound: builder.mutation<void, { roomId: string; gameId: string }>({
       query: (body) => ({
         url: "round",
@@ -95,4 +109,6 @@ export const {
   useFinishRoundMutation,
   useMakeGuessMutation,
   useGetWordQuery,
+  useRandomizeTeamsMutation,
+  useClearTeamsMutation,
 } = gameApi;

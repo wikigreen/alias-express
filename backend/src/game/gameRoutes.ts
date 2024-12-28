@@ -40,6 +40,34 @@ protectedGameRouter.post("/start", async (req, res) => {
   res.send();
 });
 
+//Randomize teams
+protectedGameRouter.post(
+  "/randomizeTeams",
+  asyncHandler<unknown, unknown, { roomId: string; gameId: string }>(
+    async (req, res) => {
+      const roomId = req.body?.roomId;
+      const gameId = req.body?.gameId;
+      await gameService.randomizeTeams(roomId!, gameId!);
+      res.status(204);
+      res.send();
+    },
+  ),
+);
+
+//Clear teams
+protectedGameRouter.post(
+  "/clearTeams",
+  asyncHandler<unknown, unknown, { roomId: string; gameId: string }>(
+    async (req, res) => {
+      const roomId = req.body?.roomId;
+      const gameId = req.body?.gameId;
+      await gameService.clearTeams(roomId!, gameId!);
+      res.status(204);
+      res.send();
+    },
+  ),
+);
+
 //Join team
 gameRouter.post("/team", async (req, res) => {
   const roomId = req.body?.roomId;

@@ -3,7 +3,7 @@ import { v4 as uuid } from "uuid";
 import { gameRepository } from "./gameRespository";
 import { socketio } from "../index";
 import { roomService } from "../room/roomService";
-import { debugMessage, Optional } from "../utils";
+import { debugMessage, Optional, shuffleArray } from "../utils";
 import { roundRepository } from "../round";
 import { Guess } from "../round/types";
 import {
@@ -104,13 +104,26 @@ class GameService {
 
   async joinTeam(roomId: string, teamId: string, playerId: string) {
     const gameId = await gameRepository.getGameIdForTeamId(teamId);
+    await this.#joinTeam(gameId, teamId, playerId);
+
+    await this.#emitGameState(roomId, gameId);
+  }
+
+  async clearTeams(roomId: string, gameId: string) {
+    const teamIds = (await gameRepository.getTeamIds(gameId)) || [];
+    for (const teamId of teamIds) {
+      await gameRepository.clearTeam(gameId, teamId);
+    }
+
+    await this.#emitGameState(roomId, gameId);
+  }
+
+  async #joinTeam(gameId: string, teamId: string, playerId: string) {
     const teams = await gameRepository.getTeamIds(gameId);
     for (const tId of teams) {
       await gameRepository.removePlayerFromTeam(gameId, tId, playerId);
     }
     await gameRepository.addPlayerToTeam(gameId, teamId, playerId);
-
-    await this.#emitGameState(roomId, gameId);
   }
 
   async getTeams(gameId: string): Promise<Team[]> {
@@ -369,6 +382,29 @@ class GameService {
           .reduce((a, b) => a + b, 0),
       ]),
     );
+  }
+
+  async randomizeTeams(roomId: string, gameId: string) {
+    const gameStatus = await gameRepository.getGameStatus(gameId);
+
+    if (gameStatus !== "waiting") {
+      throw new ActionNotAllowedError(
+        "Team shuffling not allowed if game is already started",
+      );
+    }
+
+    const teamIds = shuffleArray(
+      ((await this.getTeams(gameId)) || []).map((team) => team?.id),
+    );
+    const playerIds = shuffleArray(
+      ((await roomRepository.getPlayers(roomId)) || []).map(({ id }) => id),
+    );
+
+    for (let i = 0; i < playerIds.length; i++) {
+      await this.#joinTeam(gameId, teamIds[i % teamIds.length], playerIds[i]);
+    }
+
+    await this.#emitGameState(roomId, gameId);
   }
 
   async emitGuesses(

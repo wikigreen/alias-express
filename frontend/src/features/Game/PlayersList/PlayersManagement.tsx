@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Backdrop,
   Badge,
@@ -15,14 +15,59 @@ import {
   AdminPanelSettings as AdminPanelSettingsIcon,
   AccountCircle as AccountCircleIcon,
 } from "@mui/icons-material";
-import { useGameState } from "../../context/GameContext";
-import { Player } from "../../context/GameContext/types";
+import { useGameState } from "../../../context/GameContext";
+import { Player } from "../../../context/GameContext/types";
 import CloseIcon from "@mui/icons-material/Close";
-import CopyableField from "../../components/CopyableField /CopyableField.tsx";
+import CopyableField from "../../../components/CopyableField /CopyableField.tsx";
+import { useClearTeamsMutation, useRandomizeTeamsMutation } from "../services";
 
-export const PlayersList: React.FC = () => {
+interface PlayersManagementProps {
+  isAdmin?: boolean;
+  roomId: string;
+}
+
+export const PlayersManagement: React.FC<PlayersManagementProps> = ({
+  isAdmin = false,
+  roomId,
+}) => {
+  const { gameState } = useGameState();
   const { players } = useGameState();
   const [open, setOpen] = useState(false);
+  const [randomizeTeams] = useRandomizeTeamsMutation();
+  const [clearTeams] = useClearTeamsMutation();
+
+  const isWaitingStatus = useMemo(
+    () => gameState?.gameStatus === "waiting",
+    [gameState?.gameStatus],
+  );
+
+  const gameId = useMemo(() => gameState?.id || "", [gameState?.id]);
+
+  const handleRandomizeTeams = useCallback(async () => {
+    const req = {
+      roomId,
+      gameId,
+    };
+
+    try {
+      await randomizeTeams(req);
+    } catch (error) {
+      console.error("Failed to randomize teams:", gameId, error);
+    }
+  }, [roomId, gameId]);
+
+  const handleClearTeams = useCallback(async () => {
+    const req = {
+      roomId,
+      gameId,
+    };
+
+    try {
+      await clearTeams(req);
+    } catch (error) {
+      console.error("Failed to clear teams:", gameId, error);
+    }
+  }, [roomId, gameId]);
 
   const handleClick = () => {
     setOpen((prev) => !prev);
@@ -88,6 +133,7 @@ export const PlayersList: React.FC = () => {
                 justifyContent: "space-between",
                 flexDirection: "column",
                 marginTop: "16px",
+                gap: 1,
               }}
             >
               <Typography variant="h6">
@@ -96,6 +142,22 @@ export const PlayersList: React.FC = () => {
               <CopyableField
                 valueToCopy={window.location.href.replace(/^https?:\/\//, "")}
               />
+              <Box display={isAdmin ? "flex" : "none"} gap={1}>
+                <Button
+                  variant="contained"
+                  onClick={handleRandomizeTeams}
+                  disabled={!isWaitingStatus}
+                >
+                  Randomize Teams
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleClearTeams}
+                  disabled={!isWaitingStatus}
+                >
+                  Reset Teams
+                </Button>
+              </Box>
             </CardActions>
           </Card>
         </Snackbar>

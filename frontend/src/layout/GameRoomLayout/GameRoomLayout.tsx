@@ -4,7 +4,7 @@ import { NicknameInput } from "../../features/Room";
 import { useParams } from "react-router";
 import { useConnectToRoomMutation, useGetRoomQuery } from "../../features/Room";
 import { GameStateProvider } from "../../context/GameContext";
-import { PlayersList } from "../../features/PlayersList/PlayersList.tsx";
+import { PlayersManagement } from "../../features/Game/PlayersList/PlayersManagement.tsx";
 import { ErrorType } from "../../utils/errorHandler.ts";
 import Game from "../../features/Game/Game.tsx";
 
@@ -61,7 +61,7 @@ export const GameRoomLayout: React.FC = () => {
   return (
     <GameStateProvider roomId={roomId} gameId={data?.currentGameId}>
       <Box sx={{ margin: "auto" }}>
-        <PlayersList />
+        <PlayersManagement isAdmin={data?.isAdmin} roomId={roomId!} />
         <Game
           roomId={roomId!}
           isAdmin={data?.isAdmin}
