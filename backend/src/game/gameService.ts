@@ -444,7 +444,7 @@ class GameService {
 
     const intervalId = setInterval(() => {
       if (count >= 0) {
-        socketio.to(roomId).emit("countdown", count--);
+        socketio.to(roomId).emit("countdown", --count);
       } else {
         clearInterval(intervalId);
       }
