@@ -1,7 +1,7 @@
-import { redisClient } from "@/redis";
+import { redisClient } from "../redis";
 import { Player, Room } from "./types";
 import { randomUUID } from "node:crypto";
-import { Optional, parseObjectValues, stringifyObjectValues } from "@/utils";
+import { Optional, parseObjectValues, stringifyObjectValues } from "../utils";
 
 const createRoom = async (room: Omit<Room, "id">): Promise<Room> => {
   const roomId = randomUUID();
