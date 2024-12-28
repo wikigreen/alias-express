@@ -27,6 +27,7 @@ import { Guesses } from "./components/Guesses";
 import { GameInfo } from "./components/GameInfo";
 import { TeamsScore } from "./components/TeamsScore";
 import CopyableField from "../../components/CopyableField /CopyableField.tsx";
+import CloseIcon from "@mui/icons-material/Close";
 
 interface GameFormProps {
   roomId: string;
@@ -205,93 +206,105 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin, nickname }) => {
   }
 
   return (
-    <Box display="flex" flexDirection="column" gap={2}>
+    <>
       <IconButton
         aria-label="menu"
         size="large"
         onClick={toggleDrawer}
-        sx={{ justifyContent: "flex-start" }}
+        sx={{ marginLeft: "auto" }}
       >
         <MenuIcon fontSize="inherit" />
       </IconButton>
-      <Drawer
-        open={open}
-        onClose={() => {
-          setOpen(false);
-          setExpandedTeams(new Set());
-        }}
-      >
-        <Box
-          sx={{
-            width: "80vw",
-            maxWidth: "500px",
-            padding: 2,
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
+      <Box display="flex" flexDirection="column" gap={2}>
+        <Drawer
+          open={open}
+          onClose={() => {
+            setOpen(false);
+            setExpandedTeams(new Set());
           }}
         >
-          <CopyableField
-            valueToCopy={window.location.href.replace(/^https?:\/\//, "")}
-          />
-          {isAdmin ? (
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => handleStartGame(gameState?.id)}
-            >
-              Start game
-            </Button>
-          ) : null}
-          {gameState.teams.map((team) => (
-            <Team
-              expanded={expandedTeams.has(team.id)}
-              onArrowClick={() =>
-                setExpandedTeams((prev) => {
-                  if (prev.has(team.id)) {
-                    return new Set([...prev].filter((id) => id !== team.id));
-                  }
-                  return new Set<string>([...prev, team.id]);
-                })
-              }
-              key={team.id}
-              name={team.name}
-              id={team.id}
-              score={score[team.id]}
-              players={team.players}
-              describer={team.describer}
-              onJoin={() => handleJoinTeam(team.id, gameState?.id)}
+          <Box
+            sx={{
+              width: "80vw",
+              maxWidth: "500px",
+              padding: 2,
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            <Box display="flex" sx={{ justifyContent: "space-between" }}>
+              <Typography variant="h6">Players</Typography>
+              <IconButton onClick={() => setOpen(false)}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+            <CopyableField
+              valueToCopy={window.location.href.replace(/^https?:\/\//, "")}
             />
-          ))}
-        </Box>
-      </Drawer>
-      {waiting}
-      <GameInfo
-        currentRound={gameState?.currentRound}
-        currentTeam={currentTeamName || "No team yet"}
-        playerGuessing={gameState.currentPlayer || "No player yet"}
-        remainingTime={remainingTime?.toString() || ""}
-        scoreToWin={gameState.gameSettings.winningScore}
-        teamScore={score[gameState.currentTeam || ""]}
-        roundScore={currentRoundScore}
-      />
-      {gameState?.gameStatus === "ongoing"
-        ? gameState.teams.map((team) => (
-            <TeamsScore key={team.id} name={team.name} score={score[team.id]} />
-          ))
-        : null}
-      {isActivePlayer ? (
-        <Round
-          status={gameState?.gameStatus}
-          onFinishRound={() => handleFinishRound(gameState?.id)}
-          onGuess={() => handleMakeGuess(gameState?.id, true)}
-          onSkip={() => handleMakeGuess(gameState?.id, false)}
-          onStartRound={() => handleStartRound(gameState?.id)}
-          currentWord={word}
+            {isAdmin ? (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => handleStartGame(gameState?.id)}
+              >
+                Start game
+              </Button>
+            ) : null}
+            {gameState.teams.map((team) => (
+              <Team
+                expanded={expandedTeams.has(team.id)}
+                onArrowClick={() =>
+                  setExpandedTeams((prev) => {
+                    if (prev.has(team.id)) {
+                      return new Set([...prev].filter((id) => id !== team.id));
+                    }
+                    return new Set<string>([...prev, team.id]);
+                  })
+                }
+                key={team.id}
+                name={team.name}
+                id={team.id}
+                score={score[team.id]}
+                players={team.players}
+                describer={team.describer}
+                onJoin={() => handleJoinTeam(team.id, gameState?.id)}
+              />
+            ))}
+          </Box>
+        </Drawer>
+        {waiting}
+        <GameInfo
+          currentRound={gameState?.currentRound}
+          currentTeam={currentTeamName || "No team yet"}
+          playerGuessing={gameState.currentPlayer || "No player yet"}
+          remainingTime={remainingTime?.toString() || ""}
+          scoreToWin={gameState.gameSettings.winningScore}
+          teamScore={score[gameState.currentTeam || ""]}
+          roundScore={currentRoundScore}
         />
-      ) : null}
-      <Guesses guesses={guesses} />
-    </Box>
+        {gameState?.gameStatus === "ongoing"
+          ? gameState.teams.map((team) => (
+              <TeamsScore
+                key={team.id}
+                name={team.name}
+                score={score[team.id]}
+              />
+            ))
+          : null}
+        {isActivePlayer ? (
+          <Round
+            status={gameState?.gameStatus}
+            onFinishRound={() => handleFinishRound(gameState?.id)}
+            onGuess={() => handleMakeGuess(gameState?.id, true)}
+            onSkip={() => handleMakeGuess(gameState?.id, false)}
+            onStartRound={() => handleStartRound(gameState?.id)}
+            currentWord={word}
+          />
+        ) : null}
+        <Guesses guesses={guesses} />
+      </Box>
+    </>
   );
 };
 
