@@ -28,6 +28,7 @@ import { GameInfo } from "./components/GameInfo";
 import { TeamsScore } from "./components/TeamsScore";
 import CloseIcon from "@mui/icons-material/Close";
 import TimerComponent from "../../components/TimerComponent/TimerComponent.tsx";
+import { useUpdateGuess } from "./hooks/apiHooks.ts";
 
 interface GameFormProps {
   roomId: string;
@@ -151,6 +152,8 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin, nickname }) => {
       console.error("Failed to make guess:", gameId, error);
     }
   };
+
+  const updateGuess = useUpdateGuess(roomId, gameState?.id || "");
 
   const toggleDrawer = useCallback(() => {
     setOpen((prev: boolean) => !prev);
@@ -352,7 +355,11 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin, nickname }) => {
               currentWord={word}
             />
           ) : null}
-          <Guesses guesses={guesses} />
+          <Guesses
+            guesses={guesses}
+            isActive={isActivePlayer}
+            onSwitch={(id, guessed) => updateGuess({ id, guessed })}
+          />
         </Box>
       </Box>
     </>

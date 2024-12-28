@@ -329,6 +329,45 @@ class GameService {
     return nextWord;
   }
 
+  async updateGuess(
+    roomId: string,
+    gameId: string,
+    playerId: string,
+    guess: Guess,
+  ): Promise<void> {
+    if (!roomId || !gameId) {
+      throw new IncompleteRequestError("No game id or room id specified");
+    }
+    const gameStatus = await this.getGameStatus(gameId);
+
+    if (!gameStatus || "guessesCorrection" !== gameStatus) {
+      throw new ActionNotAllowedError("There is guesses correction status");
+    }
+
+    const { playerId: activePlayerId, teamId: activeTeamId } =
+      await this.getActivePlayer(gameId);
+
+    if (playerId !== activePlayerId) {
+      throw new AccessNotAllowed("Only active player allowed");
+    }
+
+    const currentRound = await roundRepository.getRoundNumber(gameId);
+
+    await roundRepository.updateGuess(
+      gameId,
+      currentRound.toString(),
+      activeTeamId!,
+      {
+        ...guess,
+        createTime: undefined,
+        word: undefined,
+      },
+    );
+
+    await this.emitGuesses(gameId, activeTeamId!);
+    await this.emitScore(gameId, activeTeamId!);
+  }
+
   async #endGuessingTime(roomId: string, gameId: string): Promise<void> {
     await gameRepository.saveGameMetadata(gameId, {
       gameStatus: "lastWord",

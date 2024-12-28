@@ -3,6 +3,7 @@ import { roomService } from "../room/roomService";
 import { gameService } from "./gameService";
 import { AccessNotAllowed } from "../common/routesExceptionHandler";
 import asyncHandler from "../common/routesExceptionHandler/asyncHandler";
+import { Guess } from "../round/types";
 
 export const gameRouter = Router();
 export const protectedGameRouter = Router();
@@ -32,7 +33,7 @@ protectedGameRouter.post("/", async (req, res) => {
 });
 
 //Start game
-protectedGameRouter.post("/start", async (req, res) => {
+protectedGameRouter.put("/start", async (req, res) => {
   const { id: roomId, currentGameId: gameId } =
     (await roomService.getRoom(req.body?.roomId)) || {};
   await gameService.startGame(roomId!, gameId!);
@@ -41,7 +42,7 @@ protectedGameRouter.post("/start", async (req, res) => {
 });
 
 //Randomize teams
-protectedGameRouter.post(
+protectedGameRouter.put(
   "/randomizeTeams",
   asyncHandler<unknown, unknown, { roomId: string; gameId: string }>(
     async (req, res) => {
@@ -55,7 +56,7 @@ protectedGameRouter.post(
 );
 
 //Clear teams
-protectedGameRouter.post(
+protectedGameRouter.put(
   "/clearTeams",
   asyncHandler<unknown, unknown, { roomId: string; gameId: string }>(
     async (req, res) => {
@@ -150,6 +151,24 @@ gameRouter.post(
     );
     res.status(200);
     res.send({ word });
+  }),
+);
+
+//Make guess
+gameRouter.put(
+  "/guess",
+  asyncHandler<
+    unknown,
+    unknown,
+    { roomId: string; gameId: string; guess: Guess }
+  >(async (req, res) => {
+    const roomId = req.body?.roomId;
+    const gameId = req.body?.gameId;
+    const guess = req.body?.guess;
+    const playerId = req.cookies?.[`room:${roomId}`];
+    await gameService.updateGuess(roomId, gameId, playerId, guess);
+    res.status(204);
+    res.send();
   }),
 );
 

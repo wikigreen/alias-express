@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { GameSettings, JoinTeamRequest } from "../types";
+import { Guess } from "../../../context/GameContext";
 
 export const gameApi = createApi({
   reducerPath: "gameApi",
@@ -32,21 +33,21 @@ export const gameApi = createApi({
     startGame: builder.mutation<void, { roomId: string; gameId: string }>({
       query: (body) => ({
         url: "start",
-        method: "POST",
+        method: "PUT",
         body,
       }),
     }),
     randomizeTeams: builder.mutation<void, { roomId: string; gameId: string }>({
       query: (body) => ({
         url: "randomizeTeams",
-        method: "POST",
+        method: "PUT",
         body,
       }),
     }),
     clearTeams: builder.mutation<void, { roomId: string; gameId: string }>({
       query: (body) => ({
         url: "clearTeams",
-        method: "POST",
+        method: "PUT",
         body,
       }),
     }),
@@ -98,6 +99,16 @@ export const gameApi = createApi({
           .catch((e) => console.error(e));
       },
     }),
+    updateGuess: builder.mutation<
+      { word: string },
+      { roomId: string; gameId: string; guess: Partial<Guess> }
+    >({
+      query: (body) => ({
+        url: "guess",
+        method: "PUT",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -111,4 +122,5 @@ export const {
   useGetWordQuery,
   useRandomizeTeamsMutation,
   useClearTeamsMutation,
+  useUpdateGuessMutation,
 } = gameApi;

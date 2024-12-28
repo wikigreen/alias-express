@@ -1,12 +1,23 @@
-import { Card, CardContent, Chip, Stack } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  Checkbox,
+  FormControlLabel,
+  FormGroup,
+  Typography,
+} from "@mui/material";
 import { FC } from "react";
 import { Guess } from "../../../../context/GameContext";
+import CancelIcon from "@mui/icons-material/Cancel";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 interface GuessesProps {
   guesses?: Guess[];
+  isActive: boolean;
+  onSwitch: (id: string, guessed: boolean) => void;
 }
 
-export const Guesses: FC<GuessesProps> = ({ guesses }) => {
+export const Guesses: FC<GuessesProps> = ({ guesses, onSwitch, isActive }) => {
   if ((guesses?.length || 0) < 1) {
     return null;
   }
@@ -19,19 +30,23 @@ export const Guesses: FC<GuessesProps> = ({ guesses }) => {
   return (
     <Card sx={{ width: "100%", maxHeight: "500px", overflow: "auto" }}>
       <CardContent>
-        <Stack spacing={1} alignItems="center">
+        <FormGroup>
           {sortedGuesses.map(({ id, word, guessed }) => (
-            <Chip
+            <FormControlLabel
               key={id}
-              label={word}
-              color={guessed ? "success" : "error"}
-              sx={{
-                width: "100%", // Optional: Ensures consistent width
-                maxWidth: 300, // Optional: Limits max width for better layout
-              }}
+              control={
+                <Checkbox
+                  checked={guessed}
+                  color={guessed ? "success" : "error"}
+                  icon={<CancelIcon color="error" />}
+                  checkedIcon={<CheckCircleIcon />}
+                  onChange={isActive ? () => onSwitch(id, !guessed) : undefined}
+                />
+              }
+              label={<Typography variant="h6">{word}</Typography>}
             />
           ))}
-        </Stack>
+        </FormGroup>
       </CardContent>
     </Card>
   );

@@ -15,11 +15,11 @@ import {
   AdminPanelSettings as AdminPanelSettingsIcon,
   AccountCircle as AccountCircleIcon,
 } from "@mui/icons-material";
-import { useGameState } from "@/context/GameContext";
 import { Player } from "../../../context/GameContext/types";
 import CloseIcon from "@mui/icons-material/Close";
 import { useClearTeamsMutation, useRandomizeTeamsMutation } from "../services";
-import CopyableField from "@/components/CopyableField /CopyableField";
+import { useGameState } from "../../../context/GameContext";
+import CopyableField from "../../../components/CopyableField /CopyableField.tsx";
 
 interface PlayersManagementProps {
   isAdmin?: boolean;
