@@ -22,7 +22,7 @@ export const GameInfo: FC<GameInfoProps> = ({
   roundScore,
 }) => {
   return (
-    <Card sx={{ width: "100%" }}>
+    <Card sx={{ width: "100%", flex: 1 }}>
       <CardContent>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} alignItems="center">

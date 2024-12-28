@@ -261,6 +261,7 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin, nickname }) => {
               setOpen(false);
               setExpandedTeams(new Set());
             }}
+            sx={{ display: { xs: "inline", md: "none" } }}
           >
             <Box
               sx={{
