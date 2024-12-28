@@ -4,7 +4,6 @@ import {
   Typography,
   CardActions,
   Button,
-  CardHeader,
 } from "@mui/material";
 import { FC } from "react";
 import { GameStatus } from "../../../../context/GameContext";
@@ -24,7 +23,7 @@ export const Round: FC<RoundProps> = ({
   onSkip,
   onFinishRound,
   onStartRound,
-    currentWord
+  currentWord,
 }) => {
   if (!status) {
     return "No status";
@@ -46,13 +45,12 @@ export const Round: FC<RoundProps> = ({
   if (new Set<GameStatus>(["ongoingRound", "lastWord"]).has(status)) {
     return (
       <Card sx={{ width: "100%" }}>
-        {status === "lastWord" ? <CardHeader title="Last word!!!" /> : null}
         <CardContent
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: 80,
+            height: "200px",
           }}
         >
           <Typography variant="h2">{currentWord}</Typography>

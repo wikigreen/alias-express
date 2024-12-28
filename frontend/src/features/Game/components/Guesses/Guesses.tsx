@@ -17,7 +17,7 @@ export const Guesses: FC<GuessesProps> = ({ guesses }) => {
   );
 
   return (
-    <Card sx={{ width: "100%", maxHeight: "500px", overflow: "auto", flex: 2 }}>
+    <Card sx={{ width: "100%", maxHeight: "500px", overflow: "auto" }}>
       <CardContent>
         <Stack spacing={1} alignItems="center">
           {sortedGuesses.map(({ id, word, guessed }) => (
