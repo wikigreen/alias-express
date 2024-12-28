@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardMedia,
   TextField,
   Typography,
 } from "@mui/material";
@@ -30,7 +29,7 @@ export const NicknameInput: React.FC<NicknameInputProps> = ({
   return (
     <Card
       sx={{
-        width: "35rem",
+        maxWidth: "35rem",
         height: "fit-content",
         margin: "auto",
         position: "absolute",
@@ -40,11 +39,6 @@ export const NicknameInput: React.FC<NicknameInputProps> = ({
       }}
       variant="outlined"
     >
-      <CardMedia
-        sx={{ height: 140 }}
-        image="https://placehold.co/600x400"
-        title="green iguana"
-      />
       <CardContent>
         <Typography gutterBottom variant="h6" component="div">
           You was connected successfully!

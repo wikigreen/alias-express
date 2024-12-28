@@ -4,7 +4,7 @@ import {
   Card,
   CardActions,
   CardContent,
-  CardMedia,
+  Divider,
   Typography,
 } from "@mui/material";
 import { CreateRoomButton } from "../../features/Room";
@@ -13,7 +13,7 @@ export const LobbyLayout: React.FC = () => {
   return (
     <Card
       sx={{
-        width: "35rem",
+        maxWidth: "35rem",
         height: "fit-content",
         margin: "auto",
         position: "absolute",
@@ -23,15 +23,11 @@ export const LobbyLayout: React.FC = () => {
       }}
       variant="outlined"
     >
-      <CardMedia
-        sx={{ height: 140 }}
-        image="https://placehold.co/600x400"
-        title="green iguana"
-      />
       <CardContent>
         <Typography gutterBottom variant="h3" component="div">
           Alias
         </Typography>
+        <Divider sx={{ marginBottom: 2 }} />
         <Typography gutterBottom variant="h5" component="div">
           how to play ALIAS?
         </Typography>
