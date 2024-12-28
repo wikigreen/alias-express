@@ -1,6 +1,6 @@
 import { FC } from "react";
 import { Card, CardContent, Typography, Stack, Chip } from "@mui/material";
-import { Timer, Group, Person, EmojiEvents, Update } from "@mui/icons-material";
+import { Group, Person, EmojiEvents, Update } from "@mui/icons-material";
 
 interface GameInfoProps {
   currentTeam: string;
@@ -8,7 +8,6 @@ interface GameInfoProps {
   playerGuessing: string;
   currentRound: number;
   scoreToWin: number;
-  remainingTime: string; // Format as "mm:ss" or similar
   roundScore: number;
 }
 
@@ -18,7 +17,6 @@ export const GameInfo: FC<GameInfoProps> = ({
   playerGuessing,
   currentRound,
   scoreToWin,
-  remainingTime,
   roundScore,
 }) => {
   return (
@@ -32,11 +30,10 @@ export const GameInfo: FC<GameInfoProps> = ({
             </Typography>
           </Stack>
 
-          {/* Player Guessing */}
           <Stack direction="row" spacing={1} alignItems="center">
             <Person color="secondary" />
             <Typography variant="body1">
-              Player Guessing: <strong>{playerGuessing}</strong>
+              Describer: <strong>{playerGuessing}</strong>
             </Typography>
           </Stack>
 
@@ -65,14 +62,6 @@ export const GameInfo: FC<GameInfoProps> = ({
             {roundScore != null ? (
               <Typography variant="body1">{`(${roundScore > 0 ? "+" : ""}${roundScore})`}</Typography>
             ) : null}
-          </Stack>
-
-          {/* Remaining Time */}
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Timer color="error" />
-            <Typography variant="body1" color="error">
-              Remaining Time: <strong>{remainingTime}</strong>
-            </Typography>
           </Stack>
         </Stack>
       </CardContent>

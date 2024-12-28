@@ -135,6 +135,12 @@ export const GameStateProvider = ({
   }, [gameState?.gameStatus]);
 
   useEffect(() => {
+    if (gameState?.gameStatus === "guessesCorrection") {
+      setRemainingTime(gameState?.gameSettings?.roundTime || 0);
+    }
+  }, [gameState?.gameStatus]);
+
+  useEffect(() => {
     if (socket && (gameState?.id || gameId) != null) {
       socket.emit("connectGame");
     }

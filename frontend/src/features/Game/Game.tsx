@@ -27,6 +27,7 @@ import { Guesses } from "./components/Guesses";
 import { GameInfo } from "./components/GameInfo";
 import { TeamsScore } from "./components/TeamsScore";
 import CloseIcon from "@mui/icons-material/Close";
+import TimerComponent from "../../components/TimerComponent/TimerComponent.tsx";
 
 interface GameFormProps {
   roomId: string;
@@ -320,11 +321,18 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin, nickname }) => {
             currentRound={gameState?.currentRound}
             currentTeam={currentTeamName || "No team yet"}
             playerGuessing={gameState.currentPlayer || "No player yet"}
-            remainingTime={remainingTime?.toString() || ""}
             scoreToWin={gameState.gameSettings.winningScore}
             teamScore={score[gameState.currentTeam || ""]}
             roundScore={currentRoundScore}
           />
+          {new Set<GameStatus>(["ongoingRound", "lastWord"]).has(
+            gameState?.gameStatus,
+          ) ? (
+            <TimerComponent
+              initialTime={gameState.gameSettings.roundTime}
+              currentTime={remainingTime}
+            />
+          ) : null}
           {gameState?.gameStatus === "ongoing"
             ? gameState.teams.map((team) => (
                 <TeamsScore
