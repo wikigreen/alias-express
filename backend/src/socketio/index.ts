@@ -79,8 +79,14 @@ export const initSocketIo = (server: ReturnType<typeof createServer>) => {
       }
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async () => {
       if (!player.id || !player.roomId) {
+        return;
+      }
+
+      const playerTemtTest = await roomService.getPlayer(roomId, player.id);
+
+      if (!playerTemtTest) {
         return;
       }
 

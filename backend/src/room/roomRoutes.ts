@@ -1,4 +1,4 @@
-import { Router } from "express";
+import e, { Router } from "express";
 import { roomService } from "./roomService";
 import { logErrorMessage } from "../utils";
 import asyncHandler from "../common/routesExceptionHandler/asyncHandler";
@@ -8,7 +8,7 @@ export const roomRouter = Router();
 export const protectedRoomRouter = Router();
 
 protectedRoomRouter.use(async (req, res, next) => {
-  const roomId = req.params.roomId;
+  const roomId = req.body.roomId;
   const playerId = req.cookies?.[`room:${roomId}`];
   const isAdmin = await roomService.isAdmin(roomId, playerId);
   if (isAdmin) {
@@ -35,7 +35,16 @@ roomRouter.get("/:roomId", async (req, res, next) => {
     const isAdmin = await roomService.isAdmin(req.params.roomId, playerId);
     const { nickname } =
       (await roomService.getPlayer(req.params.roomId, playerId)) || {};
-    res.send({ ...room, playerId, isAdmin, nickname });
+    res.send({
+      ...room,
+      ...(nickname
+        ? {
+            playerId,
+            isAdmin,
+            nickname,
+          }
+        : {}),
+    });
   } catch (err) {
     logErrorMessage(err?.toString() || "");
     next(err);
@@ -64,12 +73,12 @@ roomRouter.post("/:roomId", async (req, res, next) => {
 
 protectedRoomRouter.delete(
   "/player/:roomId",
-  asyncHandler<{ roomId: string }, unknown, { playerId: string }>(
+  asyncHandler<{ roomId: string }, unknown, { playerNickname: string }>(
     async (req, res) => {
       const roomId = req.params.roomId;
-      const playerIdToKick = req.body?.playerId;
+      const playerNicknameToKick = req.body?.playerNickname;
 
-      if (!playerIdToKick) {
+      if (!playerNicknameToKick) {
         res.status(400);
         res.send("Player id is required");
         return;
@@ -79,6 +88,16 @@ protectedRoomRouter.delete(
       if (!room) {
         res.status(404);
         res.send(`No such room ${roomId}`);
+        return;
+      }
+
+      const playerIdToKick = (
+        await roomService.getPlayerByNickname(roomId, playerNicknameToKick)
+      )?.id;
+
+      if (!playerIdToKick) {
+        res.status(404);
+        res.send(`No such player with nickname ${playerNicknameToKick}`);
         return;
       }
 

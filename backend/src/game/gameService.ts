@@ -3,7 +3,7 @@ import { v4 as uuid } from "uuid";
 import { gameRepository } from "./gameRespository";
 import { socketio } from "../index";
 import { roomService } from "../room/roomService";
-import { debugMessage, Optional, shuffleArray } from "../utils";
+import { Optional, shuffleArray } from "../utils";
 import { roundRepository } from "../round";
 import { Guess } from "../round/types";
 import {
@@ -548,7 +548,6 @@ class GameService {
   }
 
   private async getWinner(gameId: string) {
-    debugMessage("We are here ");
     const allGuesses = await roundRepository.getAllRoundsGrouped(gameId);
     const flatGuesses: (Guess & { teamId: string })[] = Object.entries(
       allGuesses,
@@ -576,12 +575,9 @@ class GameService {
       return null;
     }
 
-    debugMessage({ result, winningScore });
-
     const [winner, ...contenders] = Object.entries(result)
       .filter(([, value]) => value === highestScore)
       .map(([key]) => key);
-    debugMessage({ winner, contenders });
 
     return contenders.length < 1 ? winner : null;
   }

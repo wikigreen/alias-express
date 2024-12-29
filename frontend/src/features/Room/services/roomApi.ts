@@ -28,10 +28,13 @@ export const roomApi = createApi({
         transformErrorResponse,
       },
     ),
-    kickPlayer: builder.mutation<Room, { roomId: string; playerId: string }>({
-      query: ({ roomId, playerId }) => ({
+    kickPlayer: builder.mutation<
+      Room,
+      { roomId: string; playerNickname: string }
+    >({
+      query: ({ roomId, playerNickname }) => ({
         url: `/player/${roomId}`,
-        body: { playerId },
+        body: { playerNickname, roomId },
         method: "DELETE",
       }),
       transformErrorResponse,

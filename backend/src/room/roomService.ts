@@ -3,6 +3,7 @@ import { roomRepository } from "./roomRepository";
 import { Optional } from "../utils";
 import { NotFoundError } from "../common/routesExceptionHandler";
 import { EntityAlreadyExistsError } from "../common/routesExceptionHandler";
+import { socketio } from "../index";
 
 const createRoom = async (): Promise<Room> => {
   return roomRepository.createRoom({
@@ -13,6 +14,15 @@ const createRoom = async (): Promise<Room> => {
 
 const getRoom = async (roomId: Room["id"]): Promise<Optional<Room>> => {
   return roomRepository.getRoom(roomId);
+};
+
+const getPlayerByNickname = async (
+  roomId: Room["id"],
+  playerNickname: string,
+): Promise<Optional<Player>> => {
+  return (await roomRepository.getPlayers(roomId))?.find(
+    ({ nickname }) => nickname === playerNickname,
+  );
 };
 
 const connectPlayer = async (
@@ -53,6 +63,9 @@ const removePlayer = async (
   playerRoom: string,
 ): Promise<void> => {
   await roomRepository.removePlayer(playerId, playerRoom);
+  roomService.getPlayers(playerRoom).then((players) => {
+    socketio.to(playerRoom).emit("playerConnect", players);
+  });
 };
 
 const updatePlayer = async (
@@ -121,4 +134,5 @@ export const roomService = {
   isAdmin,
   getRoomIdForPlayerId,
   setGameId,
+  getPlayerByNickname,
 };

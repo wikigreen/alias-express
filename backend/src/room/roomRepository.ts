@@ -117,6 +117,7 @@ const getPlayer = async (
   const player = await redisClient.then((client) =>
     client.hGetAll(getRoomPlayerKey(roomId, playerId)),
   );
+  if (!player?.["nickname"]) return undefined;
   return {
     ...(parseObjectValues(player) as Player),
     id: playerId,
@@ -129,7 +130,7 @@ const existsByNickname = async (
   nickname: string,
 ): Promise<boolean> => {
   return getPlayers(roomId).then((players) =>
-    players.some((p) => p.nickname === nickname),
+    players.some((p) => p?.nickname === nickname),
   );
 };
 

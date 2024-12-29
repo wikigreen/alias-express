@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   CardActions,
-  Chip,
   IconButton,
   Snackbar,
   Typography,
@@ -20,6 +19,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useClearTeamsMutation, useRandomizeTeamsMutation } from "../services";
 import { useGameState } from "../../../context/GameContext";
 import CopyableField from "../../../components/CopyableField /CopyableField.tsx";
+import { useKickPlayerApi } from "../../Room/hooks/useKickPlayerApi.ts";
+import { Player as PlayerComponent } from "../Player";
 
 interface PlayersManagementProps {
   isAdmin?: boolean;
@@ -34,6 +35,7 @@ export const PlayersManagement: React.FC<PlayersManagementProps> = ({
   const [open, setOpen] = useState(false);
   const [randomizeTeams] = useRandomizeTeamsMutation();
   const [clearTeams] = useClearTeamsMutation();
+  const kickPlayer = useKickPlayerApi(roomId);
 
   const isWaitingStatus = useMemo(
     () => gameState?.gameStatus === "waiting",
@@ -77,12 +79,13 @@ export const PlayersManagement: React.FC<PlayersManagementProps> = ({
     online,
     isAdmin,
   }) => (
-    <Chip
+    <PlayerComponent
       key={nickname}
-      label={nickname}
+      nickname={nickname}
       icon={isAdmin ? <AdminPanelSettingsIcon /> : <AccountCircleIcon />}
-      color={online ? "success" : "default"}
-      variant={online ? "filled" : "outlined"}
+      online={online}
+      isAdmin={isAdmin}
+      onKick={kickPlayer}
     />
   );
 
