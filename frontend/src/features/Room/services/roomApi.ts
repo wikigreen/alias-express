@@ -24,11 +24,18 @@ export const roomApi = createApi({
           body: { nickname },
           method: "POST",
         }),
-        //TODO: replace with pessimistic update
         invalidatesTags: (_: unknown, error) => (error ? [] : ["ROOM"]),
         transformErrorResponse,
       },
     ),
+    kickPlayer: builder.mutation<Room, { roomId: string; playerId: string }>({
+      query: ({ roomId, playerId }) => ({
+        url: `/player/${roomId}`,
+        body: { playerId },
+        method: "DELETE",
+      }),
+      transformErrorResponse,
+    }),
   }),
 });
 
@@ -36,4 +43,5 @@ export const {
   useGetRoomQuery,
   useCreateRoomMutation,
   useConnectToRoomMutation,
+  useKickPlayerMutation,
 } = roomApi;

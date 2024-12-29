@@ -172,13 +172,14 @@ class GameRepository {
     gameId: string,
     teamId: string,
     playerId: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const client = await redisClient;
 
     const teamKey = `${this.redisPrefix}${gameId}:team:${teamId}`;
 
     // Remove player from the Redis list
-    await client.lRem(`${teamKey}:players`, 0, playerId); // 0 means remove all occurrences
+    const deleted = await client.lRem(`${teamKey}:players`, 0, playerId); // 0 means remove all occurrences
+    return !!deleted;
   }
 
   // Get all player IDs from a team

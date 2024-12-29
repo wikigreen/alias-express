@@ -118,12 +118,29 @@ class GameService {
     await this.#emitGameState(roomId, gameId);
   }
 
+  async removePlayerFromTeam(roomId: string, gameId: string, playerId: string) {
+    await this.#removePlayerFromTeam(gameId, playerId);
+
+    await this.#emitGameState(roomId, gameId);
+  }
+
   async #joinTeam(gameId: string, teamId: string, playerId: string) {
+    await this.#removePlayerFromTeam(gameId, playerId);
+    await gameRepository.addPlayerToTeam(gameId, teamId, playerId);
+  }
+
+  async #removePlayerFromTeam(gameId: string, playerId: string) {
     const teams = await gameRepository.getTeamIds(gameId);
     for (const tId of teams) {
-      await gameRepository.removePlayerFromTeam(gameId, tId, playerId);
+      const deleted = await gameRepository.removePlayerFromTeam(
+        gameId,
+        tId,
+        playerId,
+      );
+      if (deleted) {
+        break;
+      }
     }
-    await gameRepository.addPlayerToTeam(gameId, teamId, playerId);
   }
 
   async getTeams(gameId: string): Promise<Team[]> {

@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { roomService } from "./roomService";
 import { logErrorMessage } from "../utils";
+import asyncHandler from "../common/routesExceptionHandler/asyncHandler";
+import { gameService } from "../game/gameService";
 
 export const roomRouter = Router();
 export const protectedRoomRouter = Router();
@@ -59,3 +61,38 @@ roomRouter.post("/:roomId", async (req, res, next) => {
     next(e);
   }
 });
+
+protectedRoomRouter.delete(
+  "/player/:roomId",
+  asyncHandler<{ roomId: string }, unknown, { playerId: string }>(
+    async (req, res) => {
+      const roomId = req.params.roomId;
+      const playerIdToKick = req.body?.playerId;
+
+      if (!playerIdToKick) {
+        res.status(400);
+        res.send("Player id is required");
+        return;
+      }
+
+      const room = await roomService.getRoom(roomId);
+      if (!room) {
+        res.status(404);
+        res.send(`No such room ${roomId}`);
+        return;
+      }
+
+      if (room.currentGameId) {
+        await gameService.removePlayerFromTeam(
+          roomId,
+          room.currentGameId,
+          playerIdToKick,
+        );
+      }
+      await roomService.removePlayer(playerIdToKick, roomId);
+
+      res.status(204);
+      res.send();
+    },
+  ),
+);
