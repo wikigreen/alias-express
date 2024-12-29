@@ -60,7 +60,7 @@ export const GameRoomLayout: React.FC = () => {
 
   return (
     <GameStateProvider roomId={roomId} gameId={data?.currentGameId}>
-      <Box sx={{ margin: "auto" }}>
+      <Box sx={{ margin: "auto", padding: 2 }}>
         <PlayersManagement isAdmin={data?.isAdmin} roomId={roomId!} />
         <Game
           roomId={roomId!}

@@ -224,7 +224,6 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin, nickname }) => {
         sx={{
           gap: 2,
           justifyContent: "center",
-          maxWidth: "1500px",
           margin: "auto",
         }}
       >
@@ -348,7 +347,6 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin, nickname }) => {
           {isActivePlayer ? (
             <Round
               status={gameState?.gameStatus}
-              onFinishRound={() => handleFinishRound(gameState?.id)}
               onGuess={() => handleMakeGuess(gameState?.id, true)}
               onSkip={() => handleMakeGuess(gameState?.id, false)}
               onStartRound={() => handleStartRound(gameState?.id)}
@@ -356,6 +354,10 @@ const Game: React.FC<GameFormProps> = ({ roomId, isAdmin, nickname }) => {
             />
           ) : null}
           <Guesses
+            onFinishRound={() => handleFinishRound(gameState?.id)}
+            isGuessCorrectionStage={
+              gameState?.gameStatus === "guessesCorrection"
+            }
             guesses={guesses}
             isActive={isActivePlayer}
             onSwitch={(id, guessed) => updateGuess({ id, guessed })}

@@ -1,6 +1,9 @@
 import {
+  Button,
   Card,
+  CardActions,
   CardContent,
+  CardHeader,
   Checkbox,
   FormControlLabel,
   FormGroup,
@@ -14,10 +17,18 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 interface GuessesProps {
   guesses?: Guess[];
   isActive: boolean;
+  isGuessCorrectionStage: boolean;
   onSwitch: (id: string, guessed: boolean) => void;
+  onFinishRound: () => void;
 }
 
-export const Guesses: FC<GuessesProps> = ({ guesses, onSwitch, isActive }) => {
+export const Guesses: FC<GuessesProps> = ({
+  guesses,
+  onSwitch,
+  isActive,
+  isGuessCorrectionStage,
+  onFinishRound,
+}) => {
   if ((guesses?.length || 0) < 1) {
     return null;
   }
@@ -28,8 +39,12 @@ export const Guesses: FC<GuessesProps> = ({ guesses, onSwitch, isActive }) => {
   );
 
   return (
-    <Card sx={{ width: "100%", maxHeight: "500px", overflow: "auto" }}>
-      <CardContent>
+    <Card sx={{ width: "100%", overflow: "auto" }}>
+      <CardHeader
+        title="Guesses"
+        subheader={isGuessCorrectionStage ? "Fix guesses if needed" : undefined}
+      />
+      <CardContent sx={{ overflowY: "auto", maxHeight: "450px", mb: 2 }}>
         <FormGroup>
           {sortedGuesses.map(({ id, word, guessed }) => (
             <FormControlLabel
@@ -48,6 +63,18 @@ export const Guesses: FC<GuessesProps> = ({ guesses, onSwitch, isActive }) => {
           ))}
         </FormGroup>
       </CardContent>
+      {isGuessCorrectionStage ? (
+        <CardActions>
+          <Button
+            variant="contained"
+            color="success"
+            disabled={!isActive}
+            onClick={onFinishRound}
+          >
+            Submit
+          </Button>
+        </CardActions>
+      ) : null}
     </Card>
   );
 };

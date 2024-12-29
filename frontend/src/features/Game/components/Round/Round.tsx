@@ -13,7 +13,6 @@ interface RoundProps {
   currentWord?: string;
   onGuess: () => void;
   onSkip: () => void;
-  onFinishRound: () => void;
   onStartRound: () => void;
 }
 
@@ -21,7 +20,6 @@ export const Round: FC<RoundProps> = ({
   status,
   onGuess,
   onSkip,
-  onFinishRound,
   onStartRound,
   currentWord,
 }) => {
@@ -71,18 +69,4 @@ export const Round: FC<RoundProps> = ({
       </Card>
     );
   }
-
-  if (status === "guessesCorrection") {
-    return (
-      <Button
-        variant="contained"
-        color="success"
-        sx={{ width: "100%" }}
-        onClick={onFinishRound}
-      >
-        Finish round
-      </Button>
-    );
-  }
-  return status;
 };
