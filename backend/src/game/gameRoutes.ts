@@ -70,20 +70,18 @@ protectedGameRouter.put(
 );
 
 //Join team
-gameRouter.post("/team", async (req, res) => {
-  const roomId = req.body?.roomId;
-  const gameId = req.body?.gameId;
-  const playerId = req.cookies?.[`room:${roomId}`];
-  const gameStatus = await gameService.getGameStatus(gameId);
-  if ("waiting" !== gameStatus) {
-    res.status(409);
-    res.send();
-    return;
-  }
-  await gameService.joinTeam(roomId, req.body?.teamId, playerId);
-  res.status(204);
-  res.send();
-});
+gameRouter.post(
+  "/team",
+  asyncHandler<unknown, unknown, { roomId: string; teamId: string }>(
+    async (req, res) => {
+      const roomId = req.body?.roomId;
+      const playerId = req.cookies?.[`room:${roomId}`];
+      await gameService.joinTeam(roomId, req.body?.teamId, playerId);
+      res.status(204);
+      res.send();
+    },
+  ),
+);
 
 //Start round
 gameRouter.patch(

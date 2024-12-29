@@ -104,6 +104,16 @@ class GameService {
 
   async joinTeam(roomId: string, teamId: string, playerId: string) {
     const gameId = await gameRepository.getGameIdForTeamId(teamId);
+    const teams = await gameRepository.getTeamIds(gameId);
+    for (const teamId of teams) {
+      const playerIds = await gameRepository.getAllPlayerIdsFromTeam(
+        gameId,
+        teamId,
+      );
+      if (new Set(playerIds).has(playerId)) {
+        throw new ActionNotAllowedError("Player already in the team");
+      }
+    }
     await this.#joinTeam(gameId, teamId, playerId);
 
     await this.#emitGameState(roomId, gameId);
