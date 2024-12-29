@@ -119,6 +119,25 @@ class GameService {
   }
 
   async removePlayerFromTeam(roomId: string, gameId: string, playerId: string) {
+    const gameState = await this.getFullGameState(gameId);
+
+    if (
+      playerId === gameState?.currentPlayer &&
+      gameState?.gameStatus === "ongoingRound"
+    ) {
+      throw new ActionNotAllowedError(
+        "Cannot kick active player during the round",
+      );
+    }
+
+    if (
+      playerId === gameState?.currentPlayer &&
+      (gameState?.gameStatus === "guessesCorrection" ||
+        gameState?.gameStatus === "lastWord")
+    ) {
+      await this.finishRound(roomId, gameId, playerId);
+    }
+
     await this.#removePlayerFromTeam(gameId, playerId);
 
     await this.#emitGameState(roomId, gameId);
