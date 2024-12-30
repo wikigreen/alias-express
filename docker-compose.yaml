@@ -22,16 +22,31 @@ services:
     volumes:
       - redis_volume_data:/data
     ports:
-      - 6379:6379
-  redis_insight:
-    image: redislabs/redisinsight:1.14.0
-    container_name: redis_insight
+      - ${REDIS_PORT}:${REDIS_PORT}
+
+  redis-insight:
+    image: redis/redisinsight:latest
     restart: always
     ports:
-      - 8001:8001
+      - "5540:5540"
     volumes:
-      - redis_insight_volume_data:/db
+      - redis-insight:/data
+    depends_on:
+      - redis
+
+  curl-request:
+    image: curlimages/curl:latest
+    entrypoint: >
+      curl -X POST 'http://redis-insight:5540/api/databases'
+      -H 'Accept: application/json, text/plain, */*'
+      -H 'Connection: keep-alive'
+      -H 'Content-Type: application/json'
+      --data-raw '{"name":"redis-alias","host":"redis","port":6379,"db":0,"compressor":"NONE","timeout":30000,"ssh":false,"tls":false}'
+    depends_on:
+      - redis-insight
+      - redis
+    restart: "on-failure"
 
 volumes:
   redis_volume_data:
-  redis_insight_volume_data:
+  redis-insight:
