@@ -39,7 +39,7 @@ function getErrorMetadata(
     case IncompleteRequestError:
       return [400, error.message];
     case NotFoundError:
-      return [status("NotFound"), error.message];
+      return [404, error.message];
   }
   return [500, "Server error"];
 }
