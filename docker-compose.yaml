@@ -7,13 +7,13 @@ services:
       dockerfile: Dockerfile
       target: production
     ports:
-      - "3000:3000"
+      - ${PORT}:${PORT}
     working_dir: /app
     command: node ./dist/index.js
     environment:
-      - PORT=3000
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - PORT=${PORT}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
 
   redis:
     image: redis:latest
