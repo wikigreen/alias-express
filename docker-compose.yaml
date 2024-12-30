@@ -41,7 +41,7 @@ services:
       -H 'Accept: application/json, text/plain, */*'
       -H 'Connection: keep-alive'
       -H 'Content-Type: application/json'
-      --data-raw '{"name":"redis-alias","host":"redis","port":6379,"db":0,"compressor":"NONE","timeout":30000,"ssh":false,"tls":false}'
+      --data-raw '{"name":"redis-alias","host":"${REDIS_HOST}","port":${REDIS_PORT},"db":0,"compressor":"NONE","timeout":30000,"ssh":false,"tls":false}'
     depends_on:
       - redis-insight
       - redis
