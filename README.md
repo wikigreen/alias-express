@@ -29,8 +29,8 @@ Follow these steps to run the application manually:
 1. Clone the repository to your local machine.
 
    ```bash
-   git clone https://github.com/your-repo/fullstack-app.git
-   cd fullstack-app
+   git clone https://github.com/wikigreen/alias-express.git
+   cd alias-express
 
 ### Install Dependencies
 
