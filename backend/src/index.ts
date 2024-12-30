@@ -15,11 +15,11 @@ const app: Express = express();
 export const server = createServer(app);
 export const socketio = initSocketIo(server);
 
-app.use(express.static(path.join(__dirname, "../../frontend/dist")));
+app.use(express.static(path.join(__dirname, "./frontend")));
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../../frontend/dist", "index.html"));
+  res.sendFile(path.join(__dirname, "./frontend", "index.html"));
 });
 
 const port = process.env.PORT || 3000;
