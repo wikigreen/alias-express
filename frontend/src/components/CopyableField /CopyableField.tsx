@@ -2,10 +2,14 @@ import React, { useState } from "react";
 import { TextField, Button, InputAdornment } from "@mui/material";
 
 interface CopyableFieldProps {
-  valueToCopy: string; // The generic value to be displayed and copied
+  valueToCopy: string;
+  valueInInput: string;
 }
 
-const CopyableField: React.FC<CopyableFieldProps> = ({ valueToCopy }) => {
+const CopyableField: React.FC<CopyableFieldProps> = ({
+  valueToCopy,
+  valueInInput,
+}) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -16,7 +20,7 @@ const CopyableField: React.FC<CopyableFieldProps> = ({ valueToCopy }) => {
 
   return (
     <TextField
-      value={valueToCopy}
+      value={valueInInput}
       fullWidth
       slotProps={{
         input: {

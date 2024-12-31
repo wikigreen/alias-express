@@ -68,7 +68,8 @@ const GameForm: React.FC<GameFormProps> = ({ roomId, isAdmin }) => {
 
       <Divider />
       <CopyableField
-        valueToCopy={window.location.href.replace(/^https?:\/\//, "")}
+        valueInInput={window.location.href.replace(/^https?:\/\//, "")}
+        valueToCopy={window.location.href}
       />
     </Box>
   );

@@ -142,7 +142,8 @@ export const PlayersManagement: React.FC<PlayersManagementProps> = ({
                 Invite friends using the link!
               </Typography>
               <CopyableField
-                valueToCopy={window.location.href.replace(/^https?:\/\//, "")}
+                valueToCopy={window.location.href}
+                valueInInput={window.location.href.replace(/^https?:\/\//, "")}
               />
               <Box display={isAdmin ? "flex" : "none"} gap={1}>
                 <Button
