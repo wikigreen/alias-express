@@ -18,7 +18,7 @@ RUN npm install --prefix frontend
 RUN npm run build
 
 # Stage 2: Production image
-FROM node:20 AS production
+FROM node:22.12.0-alpine AS production
 
 # Set working directory to /app
 WORKDIR /app
